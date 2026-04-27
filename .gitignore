@@ -1,0 +1,6 @@
+.env
+server
+tmp/
+
+uploads/proofs/*
+!uploads/proofs/.gitkeep

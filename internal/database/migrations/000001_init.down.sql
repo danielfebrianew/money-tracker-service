@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS wa_message_logs;
+DROP TABLE IF EXISTS admin_logs;
+DROP TABLE IF EXISTS admins;
+DROP TABLE IF EXISTS budget_group_members;
+DROP TABLE IF EXISTS budget_groups;
+DROP TABLE IF EXISTS referral_payouts;
+DROP TABLE IF EXISTS referral_signups;
+DROP TABLE IF EXISTS referral_codes;
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS api_tokens;
+DROP TABLE IF EXISTS refresh_tokens;
+DROP TABLE IF EXISTS user_balances;
+DROP TABLE IF EXISTS users;
