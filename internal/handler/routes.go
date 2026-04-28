@@ -7,6 +7,7 @@ import (
 
 	"money-management-service/internal/cache"
 	appmw "money-management-service/internal/middleware"
+	authmodule "money-management-service/internal/modules/auth"
 	"money-management-service/internal/repository"
 )
 
@@ -20,36 +21,28 @@ func RegisterRoutes(e *echo.Echo, h *Handler, store *repository.Store, cache *ca
 	registerAdminRoutes(api, h.Admin, cache)
 }
 
-func registerAuthRoutes(api *echo.Group, auth *AuthHandler, cache *cache.Cache) {
+func registerAuthRoutes(api *echo.Group, auth *authmodule.Module, cache *cache.Cache) {
 	authRate := appmw.RateLimit(cache, "auth", 10, time.Minute)
-	api.POST("/auth/register", auth.Register, authRate)
-	api.POST("/auth/login", auth.Login, authRate)
-	api.POST("/auth/refresh", auth.Refresh, authRate)
+	auth.RegisterPublicRoutes(api, authRate)
 }
 
 func registerUserRoutes(api *echo.Group, h *Handler, cache *cache.Cache) {
-	userAPI := api.Group("", appmw.JWT(h.Auth.auth), appmw.RateLimit(cache, "api", 100, time.Minute))
-	userAPI.POST("/auth/logout", h.Auth.Logout)
+	userAPI := api.Group("", appmw.JWT(h.Auth.Service), appmw.RateLimit(cache, "api", 100, time.Minute))
+	h.Auth.RegisterUserRoutes(userAPI, appmw.RateLimit(cache, "auth", 10, time.Minute))
 	userAPI.GET("/me", h.User.Me)
 	userAPI.PUT("/me", h.User.UpdateMe)
-	userAPI.POST("/me/change-password", h.Auth.ChangePassword, appmw.RateLimit(cache, "auth", 10, time.Minute))
 
-	userAPI.POST("/transactions", h.Transactions.Create)
-	userAPI.GET("/transactions", h.Transactions.List)
-	userAPI.GET("/transactions/:id", h.Transactions.Get)
-	userAPI.DELETE("/transactions/:id", h.Transactions.Delete)
+	h.Transactions.RegisterUserRoutes(userAPI)
 
 	userAPI.GET("/dashboard/summary", h.Dashboard.Summary)
 	userAPI.GET("/dashboard/chart", h.Dashboard.Chart)
 	userAPI.GET("/report", h.Dashboard.Report)
-	userAPI.GET("/balance", h.Balance.Get)
+	h.Balance.RegisterUserRoutes(userAPI)
 
-	userAPI.POST("/payments/topup", h.Payments.CreateTopup, appmw.RateLimit(cache, "auth", 10, time.Minute))
-	userAPI.GET("/payments", h.Payments.List)
+	h.Payments.RegisterUserRoutes(userAPI, appmw.RateLimit(cache, "auth", 10, time.Minute))
 
-	userAPI.GET("/tokens", h.Tokens.List)
-	userAPI.POST("/tokens", h.Tokens.Create, appmw.RateLimit(cache, "auth", 10, time.Minute))
-	userAPI.DELETE("/tokens/:id", h.Tokens.Delete, appmw.RateLimit(cache, "auth", 10, time.Minute))
+	tokenRate := appmw.RateLimit(cache, "auth", 10, time.Minute)
+	h.Tokens.RegisterUserRoutes(userAPI, []echo.MiddlewareFunc{tokenRate}, []echo.MiddlewareFunc{tokenRate})
 
 	userAPI.POST("/groups", h.Groups.Create, appmw.RateLimit(cache, "auth", 10, time.Minute))
 	userAPI.GET("/groups", h.Groups.List)
@@ -62,7 +55,7 @@ func registerUserRoutes(api *echo.Group, h *Handler, cache *cache.Cache) {
 }
 
 func registerExternalRoutes(api *echo.Group, h *Handler, store *repository.Store, cache *cache.Cache) {
-	api.POST("/shortcut", h.Transactions.Shortcut, appmw.APIToken(store), appmw.RateLimit(cache, "shortcut", 30, time.Minute))
+	h.Transactions.RegisterExternalRoutes(api, appmw.APIToken(store), appmw.RateLimit(cache, "shortcut", 30, time.Minute))
 	api.POST("/wa/webhook", h.Webhook.WAWebhook, appmw.RateLimit(cache, "webhook", 60, time.Minute))
 }
 

@@ -1,4 +1,4 @@
-package handler
+package transactions
 
 import (
 	"net/http"
@@ -6,31 +6,29 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	appmw "money-management-service/internal/middleware"
 	"money-management-service/internal/model"
 	"money-management-service/internal/pkg/apperror"
-	"money-management-service/internal/service"
 	"money-management-service/pkg/response"
 )
 
-type TransactionHandler struct {
-	transactions *service.TransactionService
+type Handler struct {
+	service *Service
 }
 
-func NewTransactionHandler(transactions *service.TransactionService) *TransactionHandler {
-	return &TransactionHandler{transactions: transactions}
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service}
 }
 
-func (h *TransactionHandler) Shortcut(c echo.Context) error {
+func (h *Handler) Shortcut(c echo.Context) error {
 	return h.create(c, "shortcut")
 }
 
-func (h *TransactionHandler) Create(c echo.Context) error {
+func (h *Handler) Create(c echo.Context) error {
 	return h.create(c, "dashboard")
 }
 
-func (h *TransactionHandler) List(c echo.Context) error {
-	userID, err := appmw.RequireUserID(c)
+func (h *Handler) List(c echo.Context) error {
+	userID, err := requireUserID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
@@ -38,54 +36,49 @@ func (h *TransactionHandler) List(c echo.Context) error {
 	if err != nil {
 		return respondError(c, err)
 	}
-	items, total, err := h.transactions.List(c.Request().Context(), userID, filters)
+	items, total, err := h.service.List(c.Request().Context(), userID, filters)
 	if err != nil {
 		return respondError(c, err)
 	}
 	return response.Paginated(c, items, total, filters.Page, filters.PerPage)
 }
 
-func (h *TransactionHandler) Get(c echo.Context) error {
-	userID, err := appmw.RequireUserID(c)
+func (h *Handler) Get(c echo.Context) error {
+	userID, err := requireUserID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
-	tx, err := h.transactions.Get(c.Request().Context(), userID, c.Param("id"))
+	tx, err := h.service.Get(c.Request().Context(), userID, c.Param("id"))
 	if err != nil {
 		return respondError(c, apperror.New(apperror.ErrNotFound, "Transaksi tidak ditemukan"))
 	}
 	return response.Success(c, tx)
 }
 
-func (h *TransactionHandler) Delete(c echo.Context) error {
-	userID, err := appmw.RequireUserID(c)
+func (h *Handler) Delete(c echo.Context) error {
+	userID, err := requireUserID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
-	if err := h.transactions.Delete(c.Request().Context(), userID, c.Param("id")); err != nil {
+	if err := h.service.Delete(c.Request().Context(), userID, c.Param("id")); err != nil {
 		return respondError(c, err)
 	}
 	return response.Message(c, http.StatusOK, "Transaksi berhasil dihapus", nil)
 }
 
-func (h *TransactionHandler) create(c echo.Context, source string) error {
-	userID, err := appmw.RequireUserID(c)
+func (h *Handler) create(c echo.Context, source string) error {
+	userID, err := requireUserID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
-	var req struct {
-		Deskripsi string `json:"deskripsi"`
-		Jumlah    int    `json:"jumlah"`
-		Kategori  string `json:"kategori"`
-		Tipe      string `json:"tipe"`
-	}
+	var req CreateRequest
 	if err := bind(c, &req); err != nil {
 		return err
 	}
 	if req.Deskripsi == "" || req.Jumlah <= 0 || !validTipe(req.Tipe) {
 		return response.ValidationError(c, map[string]string{"request": "deskripsi, jumlah, dan tipe wajib valid"})
 	}
-	tx, err := h.transactions.Create(c.Request().Context(), userID, model.CreateTransactionInput{
+	tx, err := h.service.Create(c.Request().Context(), userID, CreateInput{
 		Deskripsi: req.Deskripsi,
 		Jumlah:    req.Jumlah,
 		Kategori:  req.Kategori,

@@ -1,4 +1,4 @@
-package handler
+package payments
 
 import (
 	"io"
@@ -10,23 +10,21 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	appmw "money-management-service/internal/middleware"
 	"money-management-service/internal/pkg/apperror"
 	"money-management-service/internal/pkg/ids"
-	"money-management-service/internal/service"
 	"money-management-service/pkg/response"
 )
 
-type PaymentHandler struct {
-	payments *service.PaymentService
+type Handler struct {
+	service *Service
 }
 
-func NewPaymentHandler(payments *service.PaymentService) *PaymentHandler {
-	return &PaymentHandler{payments: payments}
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service}
 }
 
-func (h *PaymentHandler) CreateTopup(c echo.Context) error {
-	userID, err := appmw.RequireUserID(c)
+func (h *Handler) CreateTopup(c echo.Context) error {
+	userID, err := requireUserID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
@@ -36,25 +34,25 @@ func (h *PaymentHandler) CreateTopup(c echo.Context) error {
 	if err != nil {
 		return respondError(c, err)
 	}
-	payment, err := h.payments.CreateTopup(c.Request().Context(), userID, amount, description, proofURL)
+	payment, err := h.service.CreateTopup(c.Request().Context(), userID, amount, description, proofURL)
 	if err != nil {
 		return respondError(c, err)
 	}
-	return response.Created(c, map[string]interface{}{
-		"payment_id": payment.ID,
-		"amount":     payment.Amount,
-		"status":     payment.Status,
-		"message":    "Pembayaran sedang diverifikasi. Estimasi 1x24 jam.",
+	return response.Created(c, TopupResponse{
+		PaymentID: payment.ID,
+		Amount:    payment.Amount,
+		Status:    payment.Status,
+		Message:   "Pembayaran sedang diverifikasi. Estimasi 1x24 jam.",
 	})
 }
 
-func (h *PaymentHandler) List(c echo.Context) error {
-	userID, err := appmw.RequireUserID(c)
+func (h *Handler) List(c echo.Context) error {
+	userID, err := requireUserID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
 	page, perPage := pagination(c)
-	items, total, err := h.payments.ListUser(c.Request().Context(), userID, c.QueryParam("status"), page, perPage)
+	items, total, err := h.service.ListUser(c.Request().Context(), userID, c.QueryParam("status"), page, perPage)
 	if err != nil {
 		return respondError(c, err)
 	}
