@@ -29,8 +29,10 @@ type Config struct {
 	RedisPort     string
 	RedisPassword string
 
-	OpenAIAPIKey string
-	OpenAIModel  string
+	OpenAIAPIKey          string
+	OpenAIModel           string
+	OpenAIBaseURL         string
+	OpenAIReasoningEffort string
 
 	FonnteToken        string
 	FonnteWebhookToken string
@@ -64,8 +66,10 @@ func Load() Config {
 		RedisPort:     env("REDIS_PORT", "6379"),
 		RedisPassword: env("REDIS_PASSWORD", ""),
 
-		OpenAIAPIKey: env("OPENAI_API_KEY", ""),
-		OpenAIModel:  env("OPENAI_MODEL", "gpt-4o-mini"),
+		OpenAIAPIKey:          envAny([]string{"KIE_AI_API_KEY", "OPENAI_API_KEY"}, ""),
+		OpenAIModel:           envAny([]string{"KIE_AI_MODEL", "OPENAI_MODEL"}, "gpt-5-4"),
+		OpenAIBaseURL:         envAny([]string{"KIE_AI_BASE_URL", "OPENAI_BASE_URL"}, "https://api.kie.ai"),
+		OpenAIReasoningEffort: envAny([]string{"KIE_AI_REASONING_EFFORT", "OPENAI_REASONING_EFFORT"}, "low"),
 
 		FonnteToken:        env("FONNTE_TOKEN", ""),
 		FonnteWebhookToken: env("FONNTE_WEBHOOK_TOKEN", ""),
@@ -102,6 +106,15 @@ func (c Config) RedisAddr() string {
 func env(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
+	}
+	return fallback
+}
+
+func envAny(keys []string, fallback string) string {
+	for _, key := range keys {
+		if value := os.Getenv(key); value != "" {
+			return value
+		}
 	}
 	return fallback
 }
