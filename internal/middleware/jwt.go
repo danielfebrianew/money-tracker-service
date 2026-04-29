@@ -6,12 +6,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	authmodule "money-management-service/internal/modules/auth"
 	"money-management-service/internal/pkg/apperror"
-	"money-management-service/internal/service"
 	"money-management-service/pkg/response"
 )
 
-func JWT(auth *service.AuthService) echo.MiddlewareFunc {
+func JWT(auth *authmodule.Service) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			tokenValue := accessToken(c)
@@ -41,7 +41,7 @@ func accessToken(c echo.Context) string {
 	return bearerToken(c.Request().Header.Get("Authorization"))
 }
 
-func AdminJWT(auth *service.AuthService) echo.MiddlewareFunc {
+func AdminJWT(auth *authmodule.Service) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return JWT(auth)(func(c echo.Context) error {
 			role, _ := c.Get("role").(string)

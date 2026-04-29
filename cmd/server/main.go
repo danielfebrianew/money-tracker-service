@@ -25,12 +25,11 @@ import (
 	dashboardmodule "money-management-service/internal/modules/dashboard"
 	groupsmodule "money-management-service/internal/modules/groups"
 	paymentsmodule "money-management-service/internal/modules/payments"
+	referralmodule "money-management-service/internal/modules/referral"
 	tokensmodule "money-management-service/internal/modules/tokens"
 	transactions "money-management-service/internal/modules/transactions"
 	usersmodule "money-management-service/internal/modules/users"
 	webhookmodule "money-management-service/internal/modules/webhook"
-	"money-management-service/internal/repository"
-	"money-management-service/internal/service"
 )
 
 func main() {
@@ -56,27 +55,24 @@ func main() {
 		defer redisClient.Close()
 	}
 
-	store := repository.NewStore(db)
 	appCache := cache.New(redisClient)
 
-	authModule := authmodule.NewModule(cfg, store, appCache)
+	authModule := authmodule.NewModule(cfg, db, appCache)
 	authService := authModule.Service
-	userModule := usersmodule.NewModule(store, appCache)
-	balanceModule := balancemodule.NewModule(store)
+	userModule := usersmodule.NewModule(db, appCache)
+	balanceModule := balancemodule.NewModule(db)
 	balanceService := balanceModule.Service
-	parser := service.NewSmartParser(cfg, appCache)
-	fonnte := service.NewFonnteClient(cfg)
-	paymentModule := paymentsmodule.NewModule(store, appCache)
-	tokenModule := tokensmodule.NewModule(store)
-	transactionModule := transactions.NewModule(store, appCache, parser)
+	parser := transactions.NewSmartParser(cfg, appCache)
+	fonnte := webhookmodule.NewFonnteClient(cfg)
+	paymentModule := paymentsmodule.NewModule(db, appCache)
+	tokenModule := tokensmodule.NewModule(db)
+	transactionModule := transactions.NewModule(db, appCache, parser)
 	transactionService := transactionModule.Service
-	dashboardModule := dashboardmodule.NewModule(appCache, store)
-	groupModule := groupsmodule.NewModule(store, appCache, transactionService)
-	referralService := service.NewReferralService(cfg, store)
-	adminService := service.NewAdminService(store, appCache)
-	adminModule := adminmodule.NewModule(authService, adminService, paymentModule.Service, adminmodule.NewRepository(store))
-	webhookService := service.NewWebhookService(cfg, store, appCache, parser, fonnte, transactionService)
-	webhookModule := webhookmodule.NewModule(webhookService, webhookmodule.NewRepository(store))
+	dashboardModule := dashboardmodule.NewModule(appCache, db)
+	groupModule := groupsmodule.NewModule(db, appCache, transactionService)
+	referralModule := referralmodule.NewModule(cfg, db)
+	adminModule := adminmodule.NewModule(authService, paymentModule.Service, adminmodule.NewRepository(db), appCache)
+	webhookModule := webhookmodule.NewModule(cfg, db, appCache, parser, fonnte, transactionService)
 
 	if err := authService.SeedAdmin(ctx); err != nil {
 		log.Fatalf("seed admin: %v", err)
@@ -91,7 +87,7 @@ func main() {
 		Transactions: transactionModule,
 		Dashboard:    dashboardModule,
 		Groups:       groupModule,
-		Referral:     referralService,
+		Referral:     referralModule,
 		Admin:        adminModule,
 		Webhook:      webhookModule,
 	})
@@ -103,7 +99,7 @@ func main() {
 	e.Use(appmw.SecurityHeaders())
 	e.Use(echoMiddleware.CORSWithConfig(appmw.CORS(cfg)))
 
-	handler.RegisterRoutes(e, h, store, appCache)
+	handler.RegisterRoutes(e, h, appCache)
 	startCron(ctx, balanceService)
 
 	go func() {
@@ -141,7 +137,7 @@ func migrationPath() string {
 	return "internal/database/migrations"
 }
 
-func startCron(ctx context.Context, balance *service.BalanceService) {
+func startCron(ctx context.Context, balance *balancemodule.Service) {
 	go func() {
 		ticker := time.NewTicker(24 * time.Hour)
 		defer ticker.Stop()

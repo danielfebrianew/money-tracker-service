@@ -6,17 +6,18 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"money-management-service/internal/service"
+	authmodule "money-management-service/internal/modules/auth"
+	paymentsmodule "money-management-service/internal/modules/payments"
 	"money-management-service/pkg/response"
 )
 
 type Handler struct {
-	auth     *service.AuthService
+	auth     *authmodule.Service
 	admin    *Service
-	payments *service.PaymentService
+	payments *paymentsmodule.Service
 }
 
-func NewHandler(auth *service.AuthService, admin *Service, payments *service.PaymentService) *Handler {
+func NewHandler(auth *authmodule.Service, admin *Service, payments *paymentsmodule.Service) *Handler {
 	return &Handler{auth: auth, admin: admin, payments: payments}
 }
 

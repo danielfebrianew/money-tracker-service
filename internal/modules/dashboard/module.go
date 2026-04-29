@@ -1,10 +1,10 @@
 package dashboard
 
 import (
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 
 	"money-management-service/internal/cache"
-	"money-management-service/internal/repository"
 )
 
 type Module struct {
@@ -13,8 +13,8 @@ type Module struct {
 	Repository *Repository
 }
 
-func NewModule(cache *cache.Cache, store *repository.Store) *Module {
-	repository := NewRepository(store.DB())
+func NewModule(cache *cache.Cache, db *sqlx.DB) *Module {
+	repository := NewRepository(db)
 	service := NewService(cache, repository)
 	handler := NewHandler(service)
 

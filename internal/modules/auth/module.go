@@ -1,11 +1,11 @@
 package auth
 
 import (
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 
 	"money-management-service/internal/cache"
 	"money-management-service/internal/config"
-	"money-management-service/internal/repository"
 )
 
 type Module struct {
@@ -14,8 +14,8 @@ type Module struct {
 	Repository *Repository
 }
 
-func NewModule(cfg config.Config, store *repository.Store, cache *cache.Cache) *Module {
-	repository := NewRepository(store.DB())
+func NewModule(cfg config.Config, db *sqlx.DB, cache *cache.Cache) *Module {
+	repository := NewRepository(db)
 	service := NewService(cfg, repository, cache)
 	handler := NewHandler(service)
 

@@ -1,4 +1,4 @@
-package service
+package referral
 
 import (
 	"context"
@@ -9,20 +9,19 @@ import (
 	"money-management-service/internal/config"
 	"money-management-service/internal/model"
 	"money-management-service/internal/pkg/ids"
-	"money-management-service/internal/repository"
 )
 
-type ReferralService struct {
-	cfg   config.Config
-	store *repository.Store
+type Service struct {
+	cfg        config.Config
+	repository *Repository
 }
 
-func NewReferralService(cfg config.Config, store *repository.Store) *ReferralService {
-	return &ReferralService{cfg: cfg, store: store}
+func NewService(cfg config.Config, repository *Repository) *Service {
+	return &Service{cfg: cfg, repository: repository}
 }
 
-func (s *ReferralService) Summary(ctx context.Context, userID string) (map[string]interface{}, error) {
-	code, err := s.store.GetReferralCodeByUser(ctx, userID)
+func (s *Service) Summary(ctx context.Context, userID string) (map[string]interface{}, error) {
+	code, err := s.repository.GetCodeByUser(ctx, userID)
 	if err != nil {
 		return map[string]interface{}{
 			"code":                nil,
@@ -33,7 +32,7 @@ func (s *ReferralService) Summary(ctx context.Context, userID string) (map[strin
 			"commission_per_user": 5000,
 		}, nil
 	}
-	total, active, earned, pending, err := s.store.ReferralSummary(ctx, code.Code)
+	total, active, earned, pending, err := s.repository.Summary(ctx, code.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -47,12 +46,12 @@ func (s *ReferralService) Summary(ctx context.Context, userID string) (map[strin
 	}, nil
 }
 
-func (s *ReferralService) Generate(ctx context.Context, userID string) (map[string]interface{}, error) {
-	existing, err := s.store.GetReferralCodeByUser(ctx, userID)
+func (s *Service) Generate(ctx context.Context, userID string) (map[string]interface{}, error) {
+	existing, err := s.repository.GetCodeByUser(ctx, userID)
 	if err == nil {
 		return referralResponse(s.cfg.AppURL, existing.Code), nil
 	}
-	user, err := s.store.GetUserByID(ctx, userID)
+	user, err := s.repository.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +80,7 @@ func (s *ReferralService) Generate(ctx context.Context, userID string) (map[stri
 		IsActive:   true,
 		CreatedAt:  time.Now().UTC(),
 	}
-	if err := s.store.CreateReferralCode(ctx, code); err != nil {
+	if err := s.repository.CreateCode(ctx, code); err != nil {
 		return nil, err
 	}
 	return referralResponse(s.cfg.AppURL, code.Code), nil

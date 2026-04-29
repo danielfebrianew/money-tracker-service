@@ -1,11 +1,11 @@
 package groups
 
 import (
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 
 	"money-management-service/internal/cache"
 	transactions "money-management-service/internal/modules/transactions"
-	"money-management-service/internal/repository"
 )
 
 type Module struct {
@@ -14,8 +14,8 @@ type Module struct {
 	Repository *Repository
 }
 
-func NewModule(store *repository.Store, cache *cache.Cache, transactions *transactions.Service) *Module {
-	repository := NewRepository(store.DB())
+func NewModule(db *sqlx.DB, cache *cache.Cache, transactions *transactions.Service) *Module {
+	repository := NewRepository(db)
 	service := NewService(repository, cache, transactions)
 	handler := NewHandler(service)
 

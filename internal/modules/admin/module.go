@@ -6,7 +6,8 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"money-management-service/internal/cache"
-	"money-management-service/internal/service"
+	authmodule "money-management-service/internal/modules/auth"
+	paymentsmodule "money-management-service/internal/modules/payments"
 )
 
 type Module struct {
@@ -15,17 +16,18 @@ type Module struct {
 	Repository *Repository
 }
 
-func NewModule(auth *service.AuthService, admin *service.AdminService, payments *service.PaymentService, repository *Repository) *Module {
-	handler := NewHandler(auth, admin, payments)
+func NewModule(auth *authmodule.Service, payments *paymentsmodule.Service, repository *Repository, cache *cache.Cache) *Module {
+	service := NewService(repository, cache)
+	handler := NewHandler(auth, service, payments)
 
 	return &Module{
 		Handler:    handler,
-		Service:    admin,
+		Service:    service,
 		Repository: repository,
 	}
 }
 
-func (m *Module) RegisterRoutes(api *echo.Group, auth *service.AuthService, cache *cache.Cache, adminJWT func(*service.AuthService) echo.MiddlewareFunc, rateLimit func(*cache.Cache, string, int, time.Duration) echo.MiddlewareFunc) {
+func (m *Module) RegisterRoutes(api *echo.Group, auth *authmodule.Service, cache *cache.Cache, adminJWT func(*authmodule.Service) echo.MiddlewareFunc, rateLimit func(*cache.Cache, string, int, time.Duration) echo.MiddlewareFunc) {
 	api.POST("/admin/auth/login", m.Handler.Login, rateLimit(cache, "admin_auth", 5, time.Minute))
 
 	adminRate := rateLimit(cache, "admin", 200, time.Minute)

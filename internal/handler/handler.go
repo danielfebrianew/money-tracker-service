@@ -7,11 +7,11 @@ import (
 	dashboardmodule "money-management-service/internal/modules/dashboard"
 	groupsmodule "money-management-service/internal/modules/groups"
 	paymentsmodule "money-management-service/internal/modules/payments"
+	referralmodule "money-management-service/internal/modules/referral"
 	tokensmodule "money-management-service/internal/modules/tokens"
 	transactions "money-management-service/internal/modules/transactions"
 	usersmodule "money-management-service/internal/modules/users"
 	webhookmodule "money-management-service/internal/modules/webhook"
-	"money-management-service/internal/service"
 )
 
 type Handler struct {
@@ -24,7 +24,7 @@ type Handler struct {
 	Transactions *transactions.Module
 	Dashboard    *dashboardmodule.Module
 	Groups       *groupsmodule.Module
-	Referral     *ReferralHandler
+	Referral     *referralmodule.Module
 	Admin        *adminmodule.Module
 	Webhook      *webhookmodule.Module
 }
@@ -38,7 +38,7 @@ type Dependencies struct {
 	Transactions *transactions.Module
 	Dashboard    *dashboardmodule.Module
 	Groups       *groupsmodule.Module
-	Referral     *service.ReferralService
+	Referral     *referralmodule.Module
 	Admin        *adminmodule.Module
 	Webhook      *webhookmodule.Module
 }
@@ -54,7 +54,7 @@ func New(deps Dependencies) *Handler {
 		Transactions: deps.Transactions,
 		Dashboard:    deps.Dashboard,
 		Groups:       deps.Groups,
-		Referral:     NewReferralHandler(deps.Referral),
+		Referral:     deps.Referral,
 		Admin:        deps.Admin,
 		Webhook:      deps.Webhook,
 	}

@@ -1,4 +1,4 @@
-package handler
+package referral
 
 import (
 	"errors"
@@ -10,11 +10,12 @@ import (
 	"money-management-service/pkg/response"
 )
 
-func bind(c echo.Context, dest interface{}) error {
-	if err := c.Bind(dest); err != nil {
-		return response.Error(c, http.StatusBadRequest, "Request tidak valid")
+func requireUserID(c echo.Context) (string, error) {
+	userID, _ := c.Get("user_id").(string)
+	if userID == "" {
+		return "", apperror.ErrUnauthorized
 	}
-	return nil
+	return userID, nil
 }
 
 func respondError(c echo.Context, err error) error {

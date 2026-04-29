@@ -2,6 +2,9 @@ package tokens
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
@@ -52,4 +55,56 @@ func (r *Repository) Delete(ctx context.Context, userID, tokenID string) error {
 		return apperror.ErrNotFound
 	}
 	return nil
+}
+
+func (r *Repository) Find(ctx context.Context, tokenValue string) (*model.APIToken, *model.User, error) {
+	var row struct {
+		model.APIToken
+		Phone         string    `db:"phone"`
+		Email         *string   `db:"email"`
+		PasswordHash  string    `db:"password_hash"`
+		UserName      string    `db:"user_name"`
+		Timezone      string    `db:"timezone"`
+		IsActive      bool      `db:"is_active"`
+		UserCreatedAt time.Time `db:"user_created_at"`
+		UpdatedAt     time.Time `db:"updated_at"`
+	}
+	err := r.db.GetContext(ctx, &row, `
+		SELECT
+			t.*,
+			u.phone,
+			u.email,
+			u.password_hash,
+			u.name AS user_name,
+			u.timezone,
+			u.is_active,
+			u.created_at AS user_created_at,
+			u.updated_at
+		FROM api_tokens t
+		JOIN users u ON u.id = t.user_id
+		WHERE t.token = $1
+	`, tokenValue)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil, apperror.ErrUnauthorized
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	user := &model.User{
+		ID:           row.UserID,
+		Phone:        row.Phone,
+		Email:        row.Email,
+		PasswordHash: row.PasswordHash,
+		Name:         row.UserName,
+		Timezone:     row.Timezone,
+		IsActive:     row.IsActive,
+		CreatedAt:    row.UserCreatedAt,
+		UpdatedAt:    row.UpdatedAt,
+	}
+	token := row.APIToken
+	return &token, user, nil
+}
+
+func (r *Repository) Touch(ctx context.Context, tokenID string) {
+	_, _ = r.db.ExecContext(ctx, `UPDATE api_tokens SET last_used_at = NOW() WHERE id = $1`, tokenID)
 }
