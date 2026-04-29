@@ -1,4 +1,4 @@
-package handler
+package admin
 
 import (
 	"fmt"
@@ -6,26 +6,22 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	appmw "money-management-service/internal/middleware"
 	"money-management-service/internal/service"
 	"money-management-service/pkg/response"
 )
 
-type AdminHandler struct {
+type Handler struct {
 	auth     *service.AuthService
-	admin    *service.AdminService
+	admin    *Service
 	payments *service.PaymentService
 }
 
-func NewAdminHandler(auth *service.AuthService, admin *service.AdminService, payments *service.PaymentService) *AdminHandler {
-	return &AdminHandler{auth: auth, admin: admin, payments: payments}
+func NewHandler(auth *service.AuthService, admin *Service, payments *service.PaymentService) *Handler {
+	return &Handler{auth: auth, admin: admin, payments: payments}
 }
 
-func (h *AdminHandler) Login(c echo.Context) error {
-	var req struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
+func (h *Handler) Login(c echo.Context) error {
+	var req LoginRequest
 	if err := bind(c, &req); err != nil {
 		return err
 	}
@@ -36,7 +32,7 @@ func (h *AdminHandler) Login(c echo.Context) error {
 	return response.Success(c, map[string]interface{}{"admin": admin, "access_token": pair.AccessToken, "refresh_token": pair.RefreshToken, "expires_in": pair.ExpiresIn})
 }
 
-func (h *AdminHandler) Dashboard(c echo.Context) error {
+func (h *Handler) Dashboard(c echo.Context) error {
 	data, err := h.admin.Dashboard(c.Request().Context())
 	if err != nil {
 		return respondError(c, err)
@@ -44,7 +40,7 @@ func (h *AdminHandler) Dashboard(c echo.Context) error {
 	return response.Success(c, data)
 }
 
-func (h *AdminHandler) Users(c echo.Context) error {
+func (h *Handler) Users(c echo.Context) error {
 	page, perPage := pagination(c)
 	items, total, err := h.admin.ListUsers(c.Request().Context(), c.QueryParam("status"), c.QueryParam("search"), c.QueryParam("sort"), c.QueryParam("order"), page, perPage)
 	if err != nil {
@@ -53,7 +49,7 @@ func (h *AdminHandler) Users(c echo.Context) error {
 	return response.Paginated(c, items, total, page, perPage)
 }
 
-func (h *AdminHandler) UserDetail(c echo.Context) error {
+func (h *Handler) UserDetail(c echo.Context) error {
 	data, err := h.admin.UserDetail(c.Request().Context(), c.Param("id"))
 	if err != nil {
 		return respondError(c, err)
@@ -61,15 +57,12 @@ func (h *AdminHandler) UserDetail(c echo.Context) error {
 	return response.Success(c, data)
 }
 
-func (h *AdminHandler) UpdateUserStatus(c echo.Context) error {
-	adminID, err := appmw.RequireAdminID(c)
+func (h *Handler) UpdateUserStatus(c echo.Context) error {
+	adminID, err := requireAdminID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
-	var req struct {
-		IsActive bool   `json:"is_active"`
-		Reason   string `json:"reason"`
-	}
+	var req UpdateUserStatusRequest
 	if err := bind(c, &req); err != nil {
 		return err
 	}
@@ -79,15 +72,12 @@ func (h *AdminHandler) UpdateUserStatus(c echo.Context) error {
 	return response.Message(c, http.StatusOK, "User status berhasil diubah", map[string]bool{"is_active": req.IsActive})
 }
 
-func (h *AdminHandler) AddUserBalance(c echo.Context) error {
-	adminID, err := appmw.RequireAdminID(c)
+func (h *Handler) AddUserBalance(c echo.Context) error {
+	adminID, err := requireAdminID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
-	var req struct {
-		Amount      int    `json:"amount"`
-		Description string `json:"description"`
-	}
+	var req AddUserBalanceRequest
 	if err := bind(c, &req); err != nil {
 		return err
 	}
@@ -98,7 +88,7 @@ func (h *AdminHandler) AddUserBalance(c echo.Context) error {
 	return response.Message(c, http.StatusOK, "Balance berhasil ditambahkan", map[string]int{"new_balance": balance.Balance})
 }
 
-func (h *AdminHandler) Payments(c echo.Context) error {
+func (h *Handler) Payments(c echo.Context) error {
 	page, perPage := pagination(c)
 	items, total, err := h.payments.ListAdmin(c.Request().Context(), c.QueryParam("status"), page, perPage)
 	if err != nil {
@@ -107,8 +97,8 @@ func (h *AdminHandler) Payments(c echo.Context) error {
 	return response.Paginated(c, items, total, page, perPage)
 }
 
-func (h *AdminHandler) VerifyPayment(c echo.Context) error {
-	adminID, err := appmw.RequireAdminID(c)
+func (h *Handler) VerifyPayment(c echo.Context) error {
+	adminID, err := requireAdminID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
@@ -121,14 +111,12 @@ func (h *AdminHandler) VerifyPayment(c echo.Context) error {
 	return response.Message(c, http.StatusOK, "Pembayaran berhasil diverifikasi", map[string]interface{}{"payment_id": payment.ID, "new_balance": balance.Balance, "expires_at": balance.ExpiresAt})
 }
 
-func (h *AdminHandler) RejectPayment(c echo.Context) error {
-	adminID, err := appmw.RequireAdminID(c)
+func (h *Handler) RejectPayment(c echo.Context) error {
+	adminID, err := requireAdminID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
-	var req struct {
-		Reason string `json:"reason"`
-	}
+	var req RejectPaymentRequest
 	_ = c.Bind(&req)
 	if err := h.payments.Reject(c.Request().Context(), c.Param("id")); err != nil {
 		return respondError(c, err)
@@ -139,7 +127,7 @@ func (h *AdminHandler) RejectPayment(c echo.Context) error {
 	return response.Message(c, http.StatusOK, "Pembayaran ditolak", nil)
 }
 
-func (h *AdminHandler) Revenue(c echo.Context) error {
+func (h *Handler) Revenue(c echo.Context) error {
 	data, err := h.admin.Revenue(c.Request().Context(), c.QueryParam("month"))
 	if err != nil {
 		return respondError(c, err)
@@ -147,7 +135,7 @@ func (h *AdminHandler) Revenue(c echo.Context) error {
 	return response.Success(c, data)
 }
 
-func (h *AdminHandler) Referrals(c echo.Context) error {
+func (h *Handler) Referrals(c echo.Context) error {
 	data, err := h.admin.ReferralOverview(c.Request().Context())
 	if err != nil {
 		return respondError(c, err)
@@ -155,15 +143,12 @@ func (h *AdminHandler) Referrals(c echo.Context) error {
 	return response.Success(c, data)
 }
 
-func (h *AdminHandler) ReferralPayout(c echo.Context) error {
-	adminID, err := appmw.RequireAdminID(c)
+func (h *Handler) ReferralPayout(c echo.Context) error {
+	adminID, err := requireAdminID(c)
 	if err != nil {
 		return respondError(c, err)
 	}
-	var req struct {
-		ReferralCode string `json:"referral_code"`
-		Period       string `json:"period"`
-	}
+	var req ReferralPayoutRequest
 	if err := bind(c, &req); err != nil {
 		return err
 	}
@@ -174,7 +159,7 @@ func (h *AdminHandler) ReferralPayout(c echo.Context) error {
 	return response.Message(c, http.StatusOK, "Payout berhasil dicatat", data)
 }
 
-func (h *AdminHandler) Logs(c echo.Context) error {
+func (h *Handler) Logs(c echo.Context) error {
 	page, perPage := pagination(c)
 	items, total, err := h.admin.Logs(c.Request().Context(), c.QueryParam("admin_id"), c.QueryParam("action"), page, perPage)
 	if err != nil {

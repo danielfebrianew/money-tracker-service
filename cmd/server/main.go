@@ -19,11 +19,16 @@ import (
 	"money-management-service/internal/database"
 	"money-management-service/internal/handler"
 	appmw "money-management-service/internal/middleware"
+	adminmodule "money-management-service/internal/modules/admin"
 	authmodule "money-management-service/internal/modules/auth"
 	balancemodule "money-management-service/internal/modules/balance"
+	dashboardmodule "money-management-service/internal/modules/dashboard"
+	groupsmodule "money-management-service/internal/modules/groups"
 	paymentsmodule "money-management-service/internal/modules/payments"
 	tokensmodule "money-management-service/internal/modules/tokens"
 	transactions "money-management-service/internal/modules/transactions"
+	usersmodule "money-management-service/internal/modules/users"
+	webhookmodule "money-management-service/internal/modules/webhook"
 	"money-management-service/internal/repository"
 	"money-management-service/internal/service"
 )
@@ -56,7 +61,7 @@ func main() {
 
 	authModule := authmodule.NewModule(cfg, store, appCache)
 	authService := authModule.Service
-	userService := service.NewUserService(store, appCache)
+	userModule := usersmodule.NewModule(store, appCache)
 	balanceModule := balancemodule.NewModule(store)
 	balanceService := balanceModule.Service
 	parser := service.NewSmartParser(cfg, appCache)
@@ -65,11 +70,13 @@ func main() {
 	tokenModule := tokensmodule.NewModule(store)
 	transactionModule := transactions.NewModule(store, appCache, parser)
 	transactionService := transactionModule.Service
-	dashboardService := service.NewDashboardService(appCache, store)
-	groupService := service.NewGroupService(store, appCache, transactionService)
+	dashboardModule := dashboardmodule.NewModule(appCache, store)
+	groupModule := groupsmodule.NewModule(store, appCache, transactionService)
 	referralService := service.NewReferralService(cfg, store)
 	adminService := service.NewAdminService(store, appCache)
+	adminModule := adminmodule.NewModule(authService, adminService, paymentModule.Service, adminmodule.NewRepository(store))
 	webhookService := service.NewWebhookService(cfg, store, appCache, parser, fonnte, transactionService)
+	webhookModule := webhookmodule.NewModule(webhookService, webhookmodule.NewRepository(store))
 
 	if err := authService.SeedAdmin(ctx); err != nil {
 		log.Fatalf("seed admin: %v", err)
@@ -77,16 +84,16 @@ func main() {
 
 	h := handler.New(handler.Dependencies{
 		Auth:         authModule,
-		User:         userService,
+		User:         userModule,
 		Balance:      balanceModule,
 		Tokens:       tokenModule,
 		Payments:     paymentModule,
 		Transactions: transactionModule,
-		Dashboard:    dashboardService,
-		Groups:       groupService,
+		Dashboard:    dashboardModule,
+		Groups:       groupModule,
 		Referral:     referralService,
-		Admin:        adminService,
-		Webhook:      webhookService,
+		Admin:        adminModule,
+		Webhook:      webhookModule,
 	})
 
 	e := echo.New()

@@ -1,56 +1,61 @@
 package handler
 
 import (
+	adminmodule "money-management-service/internal/modules/admin"
 	authmodule "money-management-service/internal/modules/auth"
 	balancemodule "money-management-service/internal/modules/balance"
+	dashboardmodule "money-management-service/internal/modules/dashboard"
+	groupsmodule "money-management-service/internal/modules/groups"
 	paymentsmodule "money-management-service/internal/modules/payments"
 	tokensmodule "money-management-service/internal/modules/tokens"
 	transactions "money-management-service/internal/modules/transactions"
+	usersmodule "money-management-service/internal/modules/users"
+	webhookmodule "money-management-service/internal/modules/webhook"
 	"money-management-service/internal/service"
 )
 
 type Handler struct {
 	Health       *HealthHandler
 	Auth         *authmodule.Module
-	User         *UserHandler
+	User         *usersmodule.Module
 	Balance      *balancemodule.Module
 	Tokens       *tokensmodule.Module
 	Payments     *paymentsmodule.Module
 	Transactions *transactions.Module
-	Dashboard    *DashboardHandler
-	Groups       *GroupHandler
+	Dashboard    *dashboardmodule.Module
+	Groups       *groupsmodule.Module
 	Referral     *ReferralHandler
-	Admin        *AdminHandler
-	Webhook      *WebhookHandler
+	Admin        *adminmodule.Module
+	Webhook      *webhookmodule.Module
 }
 
 type Dependencies struct {
 	Auth         *authmodule.Module
-	User         *service.UserService
+	User         *usersmodule.Module
 	Balance      *balancemodule.Module
 	Tokens       *tokensmodule.Module
 	Payments     *paymentsmodule.Module
 	Transactions *transactions.Module
-	Dashboard    *service.DashboardService
-	Groups       *service.GroupService
+	Dashboard    *dashboardmodule.Module
+	Groups       *groupsmodule.Module
 	Referral     *service.ReferralService
-	Admin        *service.AdminService
-	Webhook      *service.WebhookService
+	Admin        *adminmodule.Module
+	Webhook      *webhookmodule.Module
 }
 
 func New(deps Dependencies) *Handler {
 	return &Handler{
 		Health:       NewHealthHandler(),
 		Auth:         deps.Auth,
-		User:         NewUserHandler(deps.User),
+		User:         deps.User,
 		Balance:      deps.Balance,
 		Tokens:       deps.Tokens,
 		Payments:     deps.Payments,
 		Transactions: deps.Transactions,
-		Dashboard:    NewDashboardHandler(deps.Dashboard),
-		Groups:       NewGroupHandler(deps.Groups, deps.Transactions.Service),
+		Dashboard:    deps.Dashboard,
+		Groups:       deps.Groups,
 		Referral:     NewReferralHandler(deps.Referral),
-		Admin:        NewAdminHandler(deps.Auth.Service, deps.Admin, deps.Payments.Service),
-		Webhook:      NewWebhookHandler(deps.Webhook),
+		Admin:        deps.Admin,
+		Webhook:      deps.Webhook,
 	}
 }
