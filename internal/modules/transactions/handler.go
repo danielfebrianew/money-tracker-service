@@ -84,6 +84,7 @@ func (h *Handler) create(c echo.Context, source string) error {
 		Kategori:  req.Kategori,
 		Tipe:      req.Tipe,
 		Source:    source,
+		AccountID: req.AccountID,
 	})
 	if err != nil {
 		return respondError(c, err)
@@ -92,7 +93,7 @@ func (h *Handler) create(c echo.Context, source string) error {
 }
 
 func validTipe(tipe string) bool {
-	return tipe == "IN" || tipe == "OUT"
+	return tipe == "IN" || tipe == "OUT" || tipe == "TRANSFER"
 }
 
 func transactionFilters(c echo.Context) (model.TransactionFilters, error) {
@@ -104,8 +105,11 @@ func transactionFilters(c echo.Context) (model.TransactionFilters, error) {
 		Kategori: c.QueryParam("kategori"),
 		Search:   c.QueryParam("search"),
 	}
+	if aid := c.QueryParam("account_id"); aid != "" {
+		filters.AccountID = &aid
+	}
 	if filters.Tipe != "" && !validTipe(filters.Tipe) {
-		return filters, apperror.New(apperror.ErrValidation, "Tipe harus IN atau OUT")
+		return filters, apperror.New(apperror.ErrValidation, "Tipe harus IN, OUT, atau TRANSFER")
 	}
 	if from := c.QueryParam("from"); from != "" {
 		parsed, err := time.Parse("2006-01-02", from)

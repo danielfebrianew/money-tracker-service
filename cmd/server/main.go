@@ -20,6 +20,7 @@ import (
 	"money-management-service/internal/database"
 	"money-management-service/internal/handler"
 	appmw "money-management-service/internal/middleware"
+	accountsmodule "money-management-service/internal/modules/accounts"
 	adminmodule "money-management-service/internal/modules/admin"
 	authmodule "money-management-service/internal/modules/auth"
 	balancemodule "money-management-service/internal/modules/balance"
@@ -68,7 +69,8 @@ func main() {
 	fonnte := webhookmodule.NewFonnteClient(cfg)
 	paymentModule := paymentsmodule.NewModule(db, appCache)
 	tokenModule := tokensmodule.NewModule(db)
-	transactionModule := transactions.NewModule(db, appCache, parser)
+	accountModule := accountsmodule.NewModule(db)
+	transactionModule := transactions.NewModule(db, appCache, parser, accountModule.Repository)
 	transactionService := transactionModule.Service
 	dashboardModule := dashboardmodule.NewModule(appCache, db)
 	groupModule := groupsmodule.NewModule(db, appCache, transactionService)
@@ -87,6 +89,7 @@ func main() {
 		Tokens:       tokenModule,
 		Payments:     paymentModule,
 		Transactions: transactionModule,
+		Accounts:     accountModule,
 		Dashboard:    dashboardModule,
 		Groups:       groupModule,
 		Referral:     referralModule,

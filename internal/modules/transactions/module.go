@@ -13,9 +13,9 @@ type Module struct {
 	Repository *Repository
 }
 
-func NewModule(db *sqlx.DB, cache *cache.Cache, parser Parser) *Module {
+func NewModule(db *sqlx.DB, cache *cache.Cache, parser Parser, accountUpdater AccountUpdater) *Module {
 	repository := NewRepository(db)
-	service := NewService(repository, cache, parser)
+	service := NewService(repository, cache, parser, accountUpdater)
 	handler := NewHandler(service)
 
 	return &Module{

@@ -6,6 +6,7 @@ type Transaction struct {
 	ID         string    `json:"id" db:"id"`
 	UserID     string    `json:"user_id" db:"user_id"`
 	GroupID    *string   `json:"group_id,omitempty" db:"group_id"`
+	AccountID  *string   `json:"account_id,omitempty" db:"account_id"`
 	Jumlah     int       `json:"jumlah" db:"jumlah"`
 	Deskripsi  string    `json:"deskripsi" db:"deskripsi"`
 	Kategori   string    `json:"kategori" db:"kategori"`
@@ -14,6 +15,11 @@ type Transaction struct {
 	RecordedBy *string   `json:"recorded_by,omitempty" db:"recorded_by"`
 	Confidence *float64  `json:"confidence,omitempty" db:"confidence"`
 	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+}
+
+type TransactionResponse struct {
+	Transaction
+	AccountName *string `json:"account_name,omitempty" db:"account_name"`
 }
 
 type ParsedTransaction struct {
@@ -28,33 +34,36 @@ type ParsedTransaction struct {
 }
 
 type TransactionFilters struct {
-	Page     int
-	PerPage  int
-	Tipe     string
-	Kategori string
-	From     *time.Time
-	To       *time.Time
-	Search   string
+	Page      int
+	PerPage   int
+	Tipe      string
+	Kategori  string
+	AccountID *string
+	From      *time.Time
+	To        *time.Time
+	Search    string
 }
 
 type TransactionListParams struct {
-	UserID   string
-	GroupID  *string
-	Tipe     *string
-	Kategori *string
-	From     *time.Time
-	To       *time.Time
-	Search   *string
-	Page     int
-	PerPage  int
+	UserID    string
+	GroupID   *string
+	AccountID *string
+	Tipe      *string
+	Kategori  *string
+	From      *time.Time
+	To        *time.Time
+	Search    *string
+	Page      int
+	PerPage   int
 }
 
 type CreateTransactionInput struct {
-	Jumlah    int    `json:"jumlah"`
-	Deskripsi string `json:"deskripsi"`
-	Kategori  string `json:"kategori"`
-	Tipe      string `json:"tipe"`
-	Source    string `json:"source"`
+	Jumlah    int     `json:"jumlah"`
+	Deskripsi string  `json:"deskripsi"`
+	Kategori  string  `json:"kategori"`
+	Tipe      string  `json:"tipe"`
+	Source    string  `json:"source"`
+	AccountID *string `json:"account_id"`
 }
 
 type CategoryTotal struct {

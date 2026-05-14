@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+
 	"money-management-service/internal/cache"
 	"money-management-service/internal/model"
 	"money-management-service/internal/pkg/apperror"
@@ -15,14 +17,20 @@ type Parser interface {
 	ParseMessage(ctx context.Context, message string) (*model.ParsedTransaction, error)
 }
 
-type Service struct {
-	repository *Repository
-	cache      *cache.Cache
-	parser     Parser
+type AccountUpdater interface {
+	UpdateBalance(ctx context.Context, tx *sqlx.Tx, accountID string, delta int) error
+	Get(ctx context.Context, id, userID string) (*model.Account, error)
 }
 
-func NewService(repository *Repository, cache *cache.Cache, parser Parser) *Service {
-	return &Service{repository: repository, cache: cache, parser: parser}
+type Service struct {
+	repository     *Repository
+	cache          *cache.Cache
+	parser         Parser
+	accountUpdater AccountUpdater
+}
+
+func NewService(repository *Repository, cache *cache.Cache, parser Parser, accountUpdater AccountUpdater) *Service {
+	return &Service{repository: repository, cache: cache, parser: parser, accountUpdater: accountUpdater}
 }
 
 func (s *Service) Create(ctx context.Context, userID string, input CreateInput) (*model.Transaction, error) {
@@ -37,8 +45,29 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 	if err != nil {
 		return nil, err
 	}
-	if err := s.repository.Create(ctx, tx); err != nil {
-		return nil, err
+	if input.AccountID != nil && s.accountUpdater != nil {
+		if _, err := s.accountUpdater.Get(ctx, *input.AccountID, userID); err != nil {
+			return nil, apperror.New(apperror.ErrNotFound, "Akun tidak ditemukan")
+		}
+		dbTx, err := s.repository.BeginTx(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer func() { _ = dbTx.Rollback() }()
+		if err := s.repository.CreateTx(ctx, dbTx, tx); err != nil {
+			return nil, err
+		}
+		delta := balanceDelta(tx.Tipe, tx.Jumlah)
+		if err := s.accountUpdater.UpdateBalance(ctx, dbTx, *input.AccountID, delta); err != nil {
+			return nil, err
+		}
+		if err := dbTx.Commit(); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := s.repository.Create(ctx, tx); err != nil {
+			return nil, err
+		}
 	}
 	s.invalidateUserReports(ctx, user.ID)
 	return tx, nil
@@ -129,11 +158,44 @@ func (s *Service) Get(ctx context.Context, userID, txID string) (*model.Transact
 }
 
 func (s *Service) Delete(ctx context.Context, userID, txID string) error {
-	err := s.repository.Delete(ctx, txID, userID)
-	if err == nil {
-		s.invalidateUserReports(ctx, userID)
+	if s.accountUpdater != nil {
+		// Fetch first to check if there's an account to reverse balance for
+		fetched, err := s.repository.Get(ctx, txID, userID)
+		if err != nil {
+			return err
+		}
+		if fetched.AccountID != nil {
+			dbTx, err := s.repository.BeginTx(ctx)
+			if err != nil {
+				return err
+			}
+			defer func() { _ = dbTx.Rollback() }()
+			if err := s.repository.DeleteTx(ctx, dbTx, txID, userID); err != nil {
+				return err
+			}
+			delta := balanceDelta(fetched.Tipe, fetched.Jumlah) * -1
+			if err := s.accountUpdater.UpdateBalance(ctx, dbTx, *fetched.AccountID, delta); err != nil {
+				return err
+			}
+			if err := dbTx.Commit(); err != nil {
+				return err
+			}
+			s.invalidateUserReports(ctx, userID)
+			return nil
+		}
 	}
-	return err
+	if _, err := s.repository.Delete(ctx, txID, userID); err != nil {
+		return err
+	}
+	s.invalidateUserReports(ctx, userID)
+	return nil
+}
+
+func balanceDelta(tipe string, jumlah int) int {
+	if tipe == "IN" {
+		return jumlah
+	}
+	return -jumlah
 }
 
 func (s *Service) validateUserCanTransact(ctx context.Context, user *model.User) error {
@@ -162,8 +224,8 @@ func (s *Service) buildTransaction(ctx context.Context, user *model.User, groupI
 	if input.Deskripsi == "" || len(input.Deskripsi) > 255 {
 		return nil, apperror.New(apperror.ErrValidation, "Deskripsi wajib diisi dan maksimal 255 karakter")
 	}
-	if input.Tipe != "IN" && input.Tipe != "OUT" {
-		return nil, apperror.New(apperror.ErrValidation, "Tipe harus IN atau OUT")
+	if input.Tipe != "IN" && input.Tipe != "OUT" && input.Tipe != "TRANSFER" {
+		return nil, apperror.New(apperror.ErrValidation, "Tipe harus IN, OUT, atau TRANSFER")
 	}
 	kategori := strings.TrimSpace(input.Kategori)
 	if kategori == "" {

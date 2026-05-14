@@ -50,10 +50,22 @@ func (r *Repository) GetMembership(ctx context.Context, groupID, userID string) 
 	return &member, err
 }
 
+func (r *Repository) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
+	return r.db.BeginTxx(ctx, nil)
+}
+
 func (r *Repository) Create(ctx context.Context, tx *model.Transaction) error {
 	_, err := r.db.NamedExecContext(ctx, `
-		INSERT INTO transactions (id, user_id, group_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at)
-		VALUES (:id, :user_id, :group_id, :jumlah, :deskripsi, :kategori, :tipe, :source, :recorded_by, :confidence, :created_at)
+		INSERT INTO transactions (id, user_id, group_id, account_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at)
+		VALUES (:id, :user_id, :group_id, :account_id, :jumlah, :deskripsi, :kategori, :tipe, :source, :recorded_by, :confidence, :created_at)
+	`, tx)
+	return err
+}
+
+func (r *Repository) CreateTx(ctx context.Context, dbTx *sqlx.Tx, tx *model.Transaction) error {
+	_, err := dbTx.NamedExecContext(ctx, `
+		INSERT INTO transactions (id, user_id, group_id, account_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at)
+		VALUES (:id, :user_id, :group_id, :account_id, :jumlah, :deskripsi, :kategori, :tipe, :source, :recorded_by, :confidence, :created_at)
 	`, tx)
 	return err
 }
@@ -93,17 +105,22 @@ func (r *Repository) Get(ctx context.Context, txID, userID string) (*model.Trans
 	return &tx, err
 }
 
-func (r *Repository) Delete(ctx context.Context, txID, userID string) error {
-	res, err := r.db.ExecContext(ctx, `
-		DELETE FROM transactions WHERE id = $1 AND user_id = $2
-	`, txID, userID)
+// Delete fetches the transaction first (to return its data for balance reversal), then deletes it.
+func (r *Repository) Delete(ctx context.Context, txID, userID string) (*model.Transaction, error) {
+	tx, err := r.Get(ctx, txID, userID)
+	if err != nil {
+		return nil, err
+	}
+	_, err = r.db.ExecContext(ctx, `DELETE FROM transactions WHERE id = $1 AND user_id = $2`, txID, userID)
+	return tx, err
+}
+
+func (r *Repository) DeleteTx(ctx context.Context, dbTx *sqlx.Tx, txID, userID string) error {
+	res, err := dbTx.ExecContext(ctx, `DELETE FROM transactions WHERE id = $1 AND user_id = $2`, txID, userID)
 	if err != nil {
 		return err
 	}
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
+	affected, _ := res.RowsAffected()
 	if affected == 0 {
 		return apperror.ErrNotFound
 	}
