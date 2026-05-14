@@ -121,6 +121,46 @@ func (r *Repository) PruneRefreshTokens(ctx context.Context, userID string, keep
 	return err
 }
 
+func (r *Repository) CreateAdminRefreshToken(ctx context.Context, token model.AdminRefreshToken) error {
+	_, err := r.db.NamedExecContext(ctx, `
+		INSERT INTO admin_refresh_tokens (id, admin_id, token_hash, expires_at, created_at)
+		VALUES (:id, :admin_id, :token_hash, :expires_at, :created_at)
+	`, token)
+	return err
+}
+
+func (r *Repository) GetAdminRefreshTokenByHash(ctx context.Context, hash string) (*model.AdminRefreshToken, error) {
+	var token model.AdminRefreshToken
+	err := r.db.GetContext(ctx, &token, `SELECT * FROM admin_refresh_tokens WHERE token_hash = $1`, hash)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, apperror.ErrUnauthorized
+	}
+	return &token, err
+}
+
+func (r *Repository) DeleteAdminRefreshTokenByHash(ctx context.Context, hash string) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM admin_refresh_tokens WHERE token_hash = $1`, hash)
+	return err
+}
+
+func (r *Repository) PruneAdminRefreshTokens(ctx context.Context, adminID string, keep int) error {
+	if keep < 0 {
+		keep = 0
+	}
+	_, err := r.db.ExecContext(ctx, `
+		DELETE FROM admin_refresh_tokens
+		WHERE admin_id = $1
+		  AND id NOT IN (
+			SELECT id
+			FROM admin_refresh_tokens
+			WHERE admin_id = $1
+			ORDER BY created_at DESC
+			LIMIT $2
+		  )
+	`, adminID, keep)
+	return err
+}
+
 func (r *Repository) UpdatePassword(ctx context.Context, userID, passwordHash string) error {
 	res, err := r.db.ExecContext(ctx, `
 		UPDATE users SET password_hash = $2, updated_at = NOW() WHERE id = $1

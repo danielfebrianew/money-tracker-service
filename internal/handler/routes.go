@@ -26,7 +26,7 @@ func registerAuthRoutes(api *echo.Group, auth *authmodule.Module, cache *cache.C
 }
 
 func registerUserRoutes(api *echo.Group, h *Handler, cache *cache.Cache) {
-	userAPI := api.Group("", appmw.JWT(h.Auth.Service), appmw.RateLimit(cache, "api", 100, time.Minute))
+	userAPI := api.Group("", appmw.UserJWT(h.Auth.Service), appmw.RateLimit(cache, "api", 100, time.Minute))
 	h.Auth.RegisterUserRoutes(userAPI, appmw.RateLimit(cache, "auth", 10, time.Minute))
 	h.User.RegisterUserRoutes(userAPI)
 

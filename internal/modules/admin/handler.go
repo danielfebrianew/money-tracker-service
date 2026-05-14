@@ -30,7 +30,32 @@ func (h *Handler) Login(c echo.Context) error {
 	if err != nil {
 		return respondError(c, err)
 	}
+	authmodule.SetAuthCookies(c, pair, authmodule.AudienceAdmin)
 	return response.Success(c, map[string]interface{}{"admin": admin, "access_token": pair.AccessToken, "refresh_token": pair.RefreshToken, "expires_in": pair.ExpiresIn})
+}
+
+func (h *Handler) Refresh(c echo.Context) error {
+	refreshToken := authmodule.RefreshTokenFromRequest(c, authmodule.AdminRefreshCookie)
+	if refreshToken == "" {
+		return response.Error(c, http.StatusUnauthorized, "Refresh token tidak ditemukan")
+	}
+	pair, err := h.auth.AdminRefresh(c.Request().Context(), refreshToken)
+	if err != nil {
+		return respondError(c, err)
+	}
+	authmodule.SetAuthCookies(c, pair, authmodule.AudienceAdmin)
+	return response.Success(c, map[string]interface{}{
+		"access_token":  pair.AccessToken,
+		"refresh_token": pair.RefreshToken,
+		"expires_in":    pair.ExpiresIn,
+	})
+}
+
+func (h *Handler) Logout(c echo.Context) error {
+	refreshToken := authmodule.RefreshTokenFromRequest(c, authmodule.AdminRefreshCookie)
+	_ = h.auth.AdminLogout(c.Request().Context(), refreshToken)
+	authmodule.ClearAuthCookies(c, authmodule.AudienceAdmin)
+	return response.Message(c, http.StatusOK, "Berhasil logout", nil)
 }
 
 func (h *Handler) Dashboard(c echo.Context) error {

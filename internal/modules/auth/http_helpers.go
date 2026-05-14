@@ -86,10 +86,55 @@ func friendlyMessage(err error) string {
 	}
 }
 
-func setAuthCookies(c echo.Context, pair TokenPair) {
+// Audience constants for cookie scoping. User and admin sessions live under
+// separate cookie names so they can coexist on the same client without one
+// overriding the other.
+const (
+	AudienceUser  = "user"
+	AudienceAdmin = "admin"
+
+	UserAccessCookie   = "user_access_token"
+	UserRefreshCookie  = "user_refresh_token"
+	AdminAccessCookie  = "admin_access_token"
+	AdminRefreshCookie = "admin_refresh_token"
+
+	UserRefreshPath  = "/api/auth/refresh"
+	AdminRefreshPath = "/api/admin/auth/refresh"
+)
+
+type cookieNames struct {
+	access      string
+	refresh     string
+	refreshPath string
+}
+
+func cookiesFor(audience string) cookieNames {
+	if audience == AudienceAdmin {
+		return cookieNames{access: AdminAccessCookie, refresh: AdminRefreshCookie, refreshPath: AdminRefreshPath}
+	}
+	return cookieNames{access: UserAccessCookie, refresh: UserRefreshCookie, refreshPath: UserRefreshPath}
+}
+
+// SetAuthCookies is the exported variant for callers in other modules (e.g. admin).
+func SetAuthCookies(c echo.Context, pair TokenPair, audience string) {
+	setAuthCookies(c, pair, audience)
+}
+
+// ClearAuthCookies is the exported variant for callers in other modules.
+func ClearAuthCookies(c echo.Context, audience string) {
+	clearAuthCookies(c, audience)
+}
+
+// RefreshTokenFromRequest exposes the cookie/body lookup helper to other modules.
+func RefreshTokenFromRequest(c echo.Context, cookieName string) string {
+	return refreshTokenFromRequest(c, cookieName)
+}
+
+func setAuthCookies(c echo.Context, pair TokenPair, audience string) {
+	names := cookiesFor(audience)
 	secure := isSecure(c)
 	c.SetCookie(&http.Cookie{
-		Name:     "access_token",
+		Name:     names.access,
 		Value:    pair.AccessToken,
 		Path:     "/",
 		MaxAge:   int(pair.ExpiresIn),
@@ -98,9 +143,9 @@ func setAuthCookies(c echo.Context, pair TokenPair) {
 		SameSite: http.SameSiteLaxMode,
 	})
 	c.SetCookie(&http.Cookie{
-		Name:     "refresh_token",
+		Name:     names.refresh,
 		Value:    pair.RefreshToken,
-		Path:     "/api/auth/refresh",
+		Path:     names.refreshPath,
 		MaxAge:   7 * 24 * 60 * 60,
 		HttpOnly: true,
 		Secure:   secure,
@@ -108,10 +153,11 @@ func setAuthCookies(c echo.Context, pair TokenPair) {
 	})
 }
 
-func clearAuthCookies(c echo.Context) {
+func clearAuthCookies(c echo.Context, audience string) {
+	names := cookiesFor(audience)
 	secure := isSecure(c)
 	c.SetCookie(&http.Cookie{
-		Name:     "access_token",
+		Name:     names.access,
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
@@ -120,9 +166,9 @@ func clearAuthCookies(c echo.Context) {
 		SameSite: http.SameSiteLaxMode,
 	})
 	c.SetCookie(&http.Cookie{
-		Name:     "refresh_token",
+		Name:     names.refresh,
 		Value:    "",
-		Path:     "/api/auth/refresh",
+		Path:     names.refreshPath,
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   secure,

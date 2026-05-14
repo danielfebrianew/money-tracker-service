@@ -52,7 +52,7 @@ func (s *Service) Register(ctx context.Context, phone, name string, email *strin
 	if err != nil {
 		return nil, nil, TokenPair{}, err
 	}
-	pair, err := s.NewTokenPair(ctx, user.ID, "user", true)
+	pair, err := s.NewUserTokenPair(ctx, user.ID, "user")
 	if err != nil {
 		return nil, nil, TokenPair{}, err
 	}
@@ -74,7 +74,7 @@ func (s *Service) Login(ctx context.Context, phone, password string) (*model.Use
 	if err != nil {
 		return nil, nil, TokenPair{}, err
 	}
-	pair, err := s.NewTokenPair(ctx, user.ID, "user", true)
+	pair, err := s.NewUserTokenPair(ctx, user.ID, "user")
 	if err != nil {
 		return nil, nil, TokenPair{}, err
 	}
@@ -94,7 +94,7 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (TokenPair, 
 		return TokenPair{}, apperror.New(apperror.ErrUnauthorized, "Refresh token expired atau tidak valid")
 	}
 	_ = s.repository.DeleteRefreshTokenByHash(ctx, hash)
-	return s.NewTokenPair(ctx, claims.Subject, claims.Role, true)
+	return s.NewUserTokenPair(ctx, claims.Subject, claims.Role)
 }
 
 func (s *Service) Logout(ctx context.Context, userID, refreshToken string) error {
@@ -113,11 +113,58 @@ func (s *Service) AdminLogin(ctx context.Context, username, password string) (*m
 	if err := bcrypt.CompareHashAndPassword([]byte(admin.PasswordHash), []byte(password)); err != nil {
 		return nil, TokenPair{}, apperror.New(apperror.ErrUnauthorized, "Username atau password salah")
 	}
-	pair, err := s.NewTokenPair(ctx, admin.ID, admin.Role, false)
-	return admin, pair, err
+	pair, err := s.NewAdminTokenPair(ctx, admin.ID, admin.Role)
+	if err != nil {
+		return nil, TokenPair{}, err
+	}
+	_ = s.repository.PruneAdminRefreshTokens(ctx, admin.ID, 5)
+	return admin, pair, nil
 }
 
-func (s *Service) NewTokenPair(ctx context.Context, subject, role string, persistRefresh bool) (TokenPair, error) {
+func (s *Service) AdminRefresh(ctx context.Context, refreshToken string) (TokenPair, error) {
+	claims, err := s.ParseToken(refreshToken, true)
+	if err != nil || claims.Type != "refresh" {
+		return TokenPair{}, apperror.New(apperror.ErrUnauthorized, "Refresh token expired atau tidak valid")
+	}
+	if claims.Role != "admin" && claims.Role != "superadmin" {
+		return TokenPair{}, apperror.New(apperror.ErrForbidden, "Token bukan untuk admin")
+	}
+	hash := HashToken(refreshToken)
+	stored, err := s.repository.GetAdminRefreshTokenByHash(ctx, hash)
+	if err != nil || stored.ExpiresAt.Before(time.Now()) {
+		return TokenPair{}, apperror.New(apperror.ErrUnauthorized, "Refresh token expired atau tidak valid")
+	}
+	_ = s.repository.DeleteAdminRefreshTokenByHash(ctx, hash)
+	return s.NewAdminTokenPair(ctx, claims.Subject, claims.Role)
+}
+
+func (s *Service) AdminLogout(ctx context.Context, refreshToken string) error {
+	if refreshToken != "" {
+		_ = s.repository.DeleteAdminRefreshTokenByHash(ctx, HashToken(refreshToken))
+	}
+	return nil
+}
+
+// AudienceUser/AudienceAdmin are passed to newTokenPair to pick the correct
+// refresh-token store. Zero value (empty string) means "don't persist".
+const (
+	audienceUser  = "user"
+	audienceAdmin = "admin"
+)
+
+// NewUserTokenPair issues an access+refresh pair for a regular user. Refresh is
+// always persisted in refresh_tokens (FK to users).
+func (s *Service) NewUserTokenPair(ctx context.Context, subject, role string) (TokenPair, error) {
+	return s.newTokenPair(ctx, subject, role, audienceUser)
+}
+
+// NewAdminTokenPair issues an access+refresh pair for an admin. Refresh is
+// always persisted in admin_refresh_tokens (FK to admins).
+func (s *Service) NewAdminTokenPair(ctx context.Context, subject, role string) (TokenPair, error) {
+	return s.newTokenPair(ctx, subject, role, audienceAdmin)
+}
+
+func (s *Service) newTokenPair(ctx context.Context, subject, role, audience string) (TokenPair, error) {
 	access, err := s.sign(subject, role, "access", s.cfg.JWTAccessExpiry, false)
 	if err != nil {
 		return TokenPair{}, err
@@ -126,23 +173,37 @@ func (s *Service) NewTokenPair(ctx context.Context, subject, role string, persis
 	if err != nil {
 		return TokenPair{}, err
 	}
-	if persistRefresh {
-		err = s.repository.CreateRefreshToken(ctx, model.RefreshToken{
-			ID:        ids.New("rft"),
-			UserID:    subject,
-			TokenHash: HashToken(refresh),
-			ExpiresAt: time.Now().Add(s.cfg.JWTRefreshExpiry),
-			CreatedAt: time.Now().UTC(),
-		})
-		if err != nil {
-			return TokenPair{}, err
-		}
+	if err := s.persistRefreshToken(ctx, subject, HashToken(refresh), audience); err != nil {
+		return TokenPair{}, err
 	}
 	return TokenPair{
 		AccessToken:  access,
 		RefreshToken: refresh,
 		ExpiresIn:    int64(s.cfg.JWTAccessExpiry.Seconds()),
 	}, nil
+}
+
+func (s *Service) persistRefreshToken(ctx context.Context, subject, hash, audience string) error {
+	now := time.Now().UTC()
+	expires := time.Now().Add(s.cfg.JWTRefreshExpiry)
+	switch audience {
+	case audienceAdmin:
+		return s.repository.CreateAdminRefreshToken(ctx, model.AdminRefreshToken{
+			ID:        ids.New("art"),
+			AdminID:   subject,
+			TokenHash: hash,
+			ExpiresAt: expires,
+			CreatedAt: now,
+		})
+	default:
+		return s.repository.CreateRefreshToken(ctx, model.RefreshToken{
+			ID:        ids.New("rft"),
+			UserID:    subject,
+			TokenHash: hash,
+			ExpiresAt: expires,
+			CreatedAt: now,
+		})
+	}
 }
 
 func (s *Service) sign(subject, role, typ string, ttl time.Duration, refresh bool) (string, error) {

@@ -10,6 +10,14 @@ type RefreshToken struct {
 	CreatedAt time.Time `db:"created_at"`
 }
 
+type AdminRefreshToken struct {
+	ID        string    `db:"id"`
+	AdminID   string    `db:"admin_id"`
+	TokenHash string    `db:"token_hash"`
+	ExpiresAt time.Time `db:"expires_at"`
+	CreatedAt time.Time `db:"created_at"`
+}
+
 type APIToken struct {
 	ID         string     `json:"id" db:"id"`
 	UserID     string     `json:"user_id" db:"user_id"`

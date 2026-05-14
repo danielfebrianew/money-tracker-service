@@ -32,8 +32,14 @@ func (h *Handler) Register(c echo.Context) error {
 	if err != nil {
 		return respondError(c, err)
 	}
-	setAuthCookies(c, pair)
-	return response.Created(c, map[string]interface{}{"user": user, "balance": balance, "expires_in": pair.ExpiresIn})
+	setAuthCookies(c, pair, AudienceUser)
+	return response.Created(c, map[string]interface{}{
+		"user":          user,
+		"balance":       balance,
+		"access_token":  pair.AccessToken,
+		"refresh_token": pair.RefreshToken,
+		"expires_in":    pair.ExpiresIn,
+	})
 }
 
 func (h *Handler) Login(c echo.Context) error {
@@ -45,12 +51,18 @@ func (h *Handler) Login(c echo.Context) error {
 	if err != nil {
 		return respondError(c, err)
 	}
-	setAuthCookies(c, pair)
-	return response.Success(c, map[string]interface{}{"user": user, "balance": balance, "expires_in": pair.ExpiresIn})
+	setAuthCookies(c, pair, AudienceUser)
+	return response.Success(c, map[string]interface{}{
+		"user":          user,
+		"balance":       balance,
+		"access_token":  pair.AccessToken,
+		"refresh_token": pair.RefreshToken,
+		"expires_in":    pair.ExpiresIn,
+	})
 }
 
 func (h *Handler) Refresh(c echo.Context) error {
-	refreshToken := refreshTokenFromRequest(c)
+	refreshToken := refreshTokenFromRequest(c, UserRefreshCookie)
 	if refreshToken == "" {
 		return response.Error(c, http.StatusUnauthorized, "Refresh token tidak ditemukan")
 	}
@@ -58,8 +70,12 @@ func (h *Handler) Refresh(c echo.Context) error {
 	if err != nil {
 		return respondError(c, err)
 	}
-	setAuthCookies(c, pair)
-	return response.Success(c, map[string]interface{}{"expires_in": pair.ExpiresIn})
+	setAuthCookies(c, pair, AudienceUser)
+	return response.Success(c, map[string]interface{}{
+		"access_token":  pair.AccessToken,
+		"refresh_token": pair.RefreshToken,
+		"expires_in":    pair.ExpiresIn,
+	})
 }
 
 func (h *Handler) Logout(c echo.Context) error {
@@ -67,10 +83,10 @@ func (h *Handler) Logout(c echo.Context) error {
 	if err != nil {
 		return respondError(c, err)
 	}
-	if err := h.service.Logout(c.Request().Context(), userID, refreshTokenFromRequest(c)); err != nil {
+	if err := h.service.Logout(c.Request().Context(), userID, refreshTokenFromRequest(c, UserRefreshCookie)); err != nil {
 		return respondError(c, err)
 	}
-	clearAuthCookies(c)
+	clearAuthCookies(c, AudienceUser)
 	return response.Message(c, http.StatusOK, "Berhasil logout", nil)
 }
 
@@ -92,13 +108,9 @@ func (h *Handler) ChangePassword(c echo.Context) error {
 	return response.Message(c, http.StatusOK, "Password berhasil diubah", nil)
 }
 
-func refreshTokenFromRequest(c echo.Context) string {
-	refreshToken := ""
-	if cookie, err := c.Cookie("refresh_token"); err == nil {
-		refreshToken = cookie.Value
-	}
-	if refreshToken != "" {
-		return refreshToken
+func refreshTokenFromRequest(c echo.Context, cookieName string) string {
+	if cookie, err := c.Cookie(cookieName); err == nil && cookie.Value != "" {
+		return cookie.Value
 	}
 	var req RefreshRequest
 	_ = c.Bind(&req)

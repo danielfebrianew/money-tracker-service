@@ -11,10 +11,23 @@ import (
 	"money-management-service/pkg/response"
 )
 
-func JWT(auth *authmodule.Service) echo.MiddlewareFunc {
+// UserJWT authenticates a user request. It reads the access token from the
+// `user_access_token` cookie, falling back to the Authorization Bearer header.
+func UserJWT(auth *authmodule.Service) echo.MiddlewareFunc {
+	return jwtMiddleware(auth, authmodule.UserAccessCookie, nil)
+}
+
+// AdminJWT authenticates an admin request. It reads the access token from the
+// `admin_access_token` cookie, falling back to the Authorization Bearer header,
+// and rejects any role outside admin/superadmin.
+func AdminJWT(auth *authmodule.Service) echo.MiddlewareFunc {
+	return jwtMiddleware(auth, authmodule.AdminAccessCookie, []string{"admin", "superadmin"})
+}
+
+func jwtMiddleware(auth *authmodule.Service, cookieName string, allowedRoles []string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			tokenValue := accessToken(c)
+			tokenValue := tokenFromRequest(c, cookieName)
 			if tokenValue == "" {
 				return response.Error(c, http.StatusUnauthorized, "Token tidak ditemukan")
 			}
@@ -22,36 +35,42 @@ func JWT(auth *authmodule.Service) echo.MiddlewareFunc {
 			if err != nil || claims.Type != "access" {
 				return response.Error(c, http.StatusUnauthorized, "Token tidak valid atau sudah expired")
 			}
-			c.Set("user_id", claims.Subject)
+			if len(allowedRoles) > 0 && !containsRole(allowedRoles, claims.Role) {
+				return response.Error(c, http.StatusForbidden, "Akses admin dibutuhkan")
+			}
 			c.Set("role", claims.Role)
-			if claims.Role == "admin" || claims.Role == "superadmin" {
+			if len(allowedRoles) > 0 {
 				c.Set("admin_id", claims.Subject)
+			} else {
+				c.Set("user_id", claims.Subject)
 			}
 			return next(c)
 		}
 	}
 }
 
-// accessToken reads from HttpOnly cookie first, falls back to Bearer header.
-// Cookie is used by Next.js SSR; Bearer is used by Postman and API token clients.
-func accessToken(c echo.Context) string {
-	if cookie, err := c.Cookie("access_token"); err == nil && cookie.Value != "" {
+// RequireRole guards an endpoint to a specific subset of roles. It must be
+// placed AFTER UserJWT or AdminJWT so the role claim is already in context.
+func RequireRole(roles ...string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			role, _ := c.Get("role").(string)
+			if !containsRole(roles, role) {
+				return response.Error(c, http.StatusForbidden, "Akses tidak diizinkan")
+			}
+			return next(c)
+		}
+	}
+}
+
+// tokenFromRequest reads the access token from the audience-specific cookie,
+// falling back to the Authorization Bearer header. Cookies are scoped per
+// audience so user and admin sessions can coexist on the same client.
+func tokenFromRequest(c echo.Context, cookieName string) string {
+	if cookie, err := c.Cookie(cookieName); err == nil && cookie.Value != "" {
 		return cookie.Value
 	}
 	return bearerToken(c.Request().Header.Get("Authorization"))
-}
-
-func AdminJWT(auth *authmodule.Service) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return JWT(auth)(func(c echo.Context) error {
-			role, _ := c.Get("role").(string)
-			if role != "admin" && role != "superadmin" {
-				return response.Error(c, http.StatusForbidden, "Akses admin dibutuhkan")
-			}
-			c.Set("admin_id", c.Get("user_id"))
-			return next(c)
-		})
-	}
 }
 
 func RequireUserID(c echo.Context) (string, error) {
@@ -79,4 +98,13 @@ func bearerToken(header string) string {
 		return ""
 	}
 	return strings.TrimSpace(parts[1])
+}
+
+func containsRole(roles []string, role string) bool {
+	for _, r := range roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
 }
