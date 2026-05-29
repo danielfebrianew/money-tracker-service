@@ -69,6 +69,26 @@ definitions:
       limit:
         type: integer
     type: object
+  categories.CreateInput:
+    properties:
+      color:
+        type: string
+      icon:
+        type: string
+      label:
+        type: string
+      name:
+        type: string
+    type: object
+  categories.UpdateInput:
+    properties:
+      color:
+        type: string
+      icon:
+        type: string
+      label:
+        type: string
+    type: object
   groups.CreateRequest:
     properties:
       name:
@@ -496,6 +516,109 @@ paths:
       summary: Histori pengeluaran per kategori
       tags:
       - Budget
+  /categories:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftar kategori user
+      tags:
+      - Categories
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Data kategori
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/categories.CreateInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Buat kategori baru
+      tags:
+      - Categories
+  /categories/{id}:
+    delete:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus kategori
+      tags:
+      - Categories
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data yang diupdate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/categories.UpdateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update kategori
+      tags:
+      - Categories
   /dashboard/chart:
     get:
       parameters:
