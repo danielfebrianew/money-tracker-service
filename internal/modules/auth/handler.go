@@ -47,7 +47,7 @@ func (h *Handler) Login(c echo.Context) error {
 	if err := bind(c, &req); err != nil {
 		return err
 	}
-	user, balance, pair, err := h.service.Login(c.Request().Context(), req.Phone, req.Password)
+	user, balance, pair, err := h.service.Login(c.Request().Context(), req.Identifier, req.Password)
 	if err != nil {
 		return respondError(c, err)
 	}

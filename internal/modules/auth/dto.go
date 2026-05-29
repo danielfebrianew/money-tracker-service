@@ -9,8 +9,8 @@ type RegisterRequest struct {
 }
 
 type LoginRequest struct {
-	Phone    string `json:"phone"`
-	Password string `json:"password"`
+	Identifier string `json:"identifier"` // email (default) atau nomor telepon (628xxx)
+	Password   string `json:"password"`
 }
 
 type RefreshRequest struct {

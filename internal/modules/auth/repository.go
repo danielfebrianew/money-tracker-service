@@ -66,6 +66,12 @@ func (r *Repository) GetUserByPhone(ctx context.Context, phone string) (*model.U
 	return userOrNotFound(&user, err)
 }
 
+func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+	var user model.User
+	err := r.db.GetContext(ctx, &user, `SELECT * FROM users WHERE email = $1`, email)
+	return userOrNotFound(&user, err)
+}
+
 func (r *Repository) GetUserByID(ctx context.Context, id string) (*model.User, error) {
 	var user model.User
 	err := r.db.GetContext(ctx, &user, `SELECT * FROM users WHERE id = $1`, id)

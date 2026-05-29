@@ -59,13 +59,19 @@ func (s *Service) Register(ctx context.Context, phone, name string, email *strin
 	return user, balance, pair, nil
 }
 
-func (s *Service) Login(ctx context.Context, phone, password string) (*model.User, *model.UserBalance, TokenPair, error) {
-	user, err := s.repository.GetUserByPhone(ctx, phone)
+func (s *Service) Login(ctx context.Context, identifier, password string) (*model.User, *model.UserBalance, TokenPair, error) {
+	var user *model.User
+	var err error
+	if phonePattern.MatchString(identifier) {
+		user, err = s.repository.GetUserByPhone(ctx, identifier)
+	} else {
+		user, err = s.repository.GetUserByEmail(ctx, identifier)
+	}
 	if err != nil {
-		return nil, nil, TokenPair{}, apperror.New(apperror.ErrUnauthorized, "Nomor telepon atau password salah")
+		return nil, nil, TokenPair{}, apperror.New(apperror.ErrUnauthorized, "Email/nomor telepon atau password salah")
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return nil, nil, TokenPair{}, apperror.New(apperror.ErrUnauthorized, "Nomor telepon atau password salah")
+		return nil, nil, TokenPair{}, apperror.New(apperror.ErrUnauthorized, "Email/nomor telepon atau password salah")
 	}
 	if !user.IsActive {
 		return nil, nil, TokenPair{}, apperror.New(apperror.ErrForbidden, "Akun dinonaktifkan. Hubungi admin.")
