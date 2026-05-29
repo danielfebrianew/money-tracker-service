@@ -4,7 +4,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 
-	"money-management-service/internal/cache"
+	"money-tracker-service/internal/cache"
 )
 
 type Module struct {

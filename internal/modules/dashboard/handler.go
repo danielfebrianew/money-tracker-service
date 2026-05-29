@@ -3,8 +3,8 @@ package dashboard
 import (
 	"github.com/labstack/echo/v4"
 
-	"money-management-service/internal/pkg/httphelper"
-	"money-management-service/pkg/response"
+	"money-tracker-service/internal/pkg/httphelper"
+	"money-tracker-service/pkg/response"
 )
 
 type Handler struct {

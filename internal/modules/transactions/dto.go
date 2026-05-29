@@ -1,6 +1,6 @@
 package transactions
 
-import "money-management-service/internal/model"
+import "money-tracker-service/internal/model"
 
 type CreateRequest struct {
 	Deskripsi string  `json:"deskripsi"`

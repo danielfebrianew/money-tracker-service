@@ -10,10 +10,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"money-management-service/internal/pkg/apperror"
-	"money-management-service/internal/pkg/httphelper"
-	"money-management-service/internal/pkg/ids"
-	"money-management-service/pkg/response"
+	"money-tracker-service/internal/pkg/apperror"
+	"money-tracker-service/internal/pkg/httphelper"
+	"money-tracker-service/internal/pkg/ids"
+	"money-tracker-service/pkg/response"
 )
 
 type Handler struct {

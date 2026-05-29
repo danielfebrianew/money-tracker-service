@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"money-management-service/internal/model"
+	"money-tracker-service/internal/model"
 )
 
 type Service struct {

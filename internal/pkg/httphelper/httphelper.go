@@ -7,8 +7,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"money-management-service/internal/pkg/apperror"
-	"money-management-service/pkg/response"
+	"money-tracker-service/internal/pkg/apperror"
+	"money-tracker-service/pkg/response"
 )
 
 func Bind(c echo.Context, dest interface{}) error {

@@ -10,9 +10,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"money-management-service/internal/model"
-	"money-management-service/internal/pkg/apperror"
-	"money-management-service/internal/pkg/ids"
+	"money-tracker-service/internal/model"
+	"money-tracker-service/internal/pkg/apperror"
+	"money-tracker-service/internal/pkg/ids"
 )
 
 type Repository struct {

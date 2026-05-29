@@ -6,11 +6,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	authmodule "money-management-service/internal/modules/auth"
-	paymentsmodule "money-management-service/internal/modules/payments"
-	"money-management-service/internal/pkg/cookie"
-	"money-management-service/internal/pkg/httphelper"
-	"money-management-service/pkg/response"
+	authmodule "money-tracker-service/internal/modules/auth"
+	paymentsmodule "money-tracker-service/internal/modules/payments"
+	"money-tracker-service/internal/pkg/cookie"
+	"money-tracker-service/internal/pkg/httphelper"
+	"money-tracker-service/pkg/response"
 )
 
 type Handler struct {

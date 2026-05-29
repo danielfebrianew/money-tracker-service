@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"money-management-service/internal/config"
-	"money-management-service/internal/model"
-	"money-management-service/internal/pkg/ids"
+	"money-tracker-service/internal/config"
+	"money-tracker-service/internal/model"
+	"money-tracker-service/internal/pkg/ids"
 )
 
 type Service struct {

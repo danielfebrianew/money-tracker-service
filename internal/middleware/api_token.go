@@ -5,8 +5,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	tokensmodule "money-management-service/internal/modules/tokens"
-	"money-management-service/pkg/response"
+	tokensmodule "money-tracker-service/internal/modules/tokens"
+	"money-tracker-service/pkg/response"
 )
 
 func APIToken(tokens *tokensmodule.Repository) echo.MiddlewareFunc {

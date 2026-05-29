@@ -3,7 +3,7 @@ package middleware
 import (
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 
-	"money-management-service/internal/config"
+	"money-tracker-service/internal/config"
 )
 
 func CORS(cfg config.Config) echoMiddleware.CORSConfig {

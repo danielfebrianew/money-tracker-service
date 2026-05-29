@@ -10,12 +10,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
-	"money-management-service/internal/cache"
-	"money-management-service/internal/config"
-	"money-management-service/internal/model"
-	"money-management-service/internal/pkg/apperror"
-	"money-management-service/internal/pkg/cookie"
-	"money-management-service/internal/pkg/ids"
+	"money-tracker-service/internal/cache"
+	"money-tracker-service/internal/config"
+	"money-tracker-service/internal/model"
+	"money-tracker-service/internal/pkg/apperror"
+	"money-tracker-service/internal/pkg/cookie"
+	"money-tracker-service/internal/pkg/ids"
 )
 
 type Service struct {

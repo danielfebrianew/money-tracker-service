@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"money-management-service/pkg/response"
+	"money-tracker-service/pkg/response"
 )
 
 type HealthHandler struct{}

@@ -1,6 +1,6 @@
 package accounts
 
-import "money-management-service/internal/model"
+import "money-tracker-service/internal/model"
 
 type CreateRequest struct {
 	Name string `json:"name"`

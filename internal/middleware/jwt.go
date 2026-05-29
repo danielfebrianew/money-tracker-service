@@ -6,10 +6,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	authmodule "money-management-service/internal/modules/auth"
-	"money-management-service/internal/pkg/apperror"
-	"money-management-service/internal/pkg/cookie"
-	"money-management-service/pkg/response"
+	authmodule "money-tracker-service/internal/modules/auth"
+	"money-tracker-service/internal/pkg/apperror"
+	"money-tracker-service/internal/pkg/cookie"
+	"money-tracker-service/pkg/response"
 )
 
 // UserJWT authenticates a user request. It reads the access token from the

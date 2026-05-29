@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"money-management-service/internal/config"
+	"money-tracker-service/internal/config"
 )
 
 type FonnteService interface {

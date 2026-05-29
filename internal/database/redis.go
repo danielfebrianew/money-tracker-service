@@ -6,7 +6,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"money-management-service/internal/config"
+	"money-tracker-service/internal/config"
 )
 
 func ConnectRedis(ctx context.Context, cfg config.Config) (*redis.Client, error) {

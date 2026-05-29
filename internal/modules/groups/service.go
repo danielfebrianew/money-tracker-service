@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"money-management-service/internal/cache"
-	"money-management-service/internal/model"
-	transactions "money-management-service/internal/modules/transactions"
-	"money-management-service/internal/pkg/apperror"
-	"money-management-service/internal/pkg/ids"
+	"money-tracker-service/internal/cache"
+	"money-tracker-service/internal/model"
+	transactions "money-tracker-service/internal/modules/transactions"
+	"money-tracker-service/internal/pkg/apperror"
+	"money-tracker-service/internal/pkg/ids"
 )
 
 type Service struct {

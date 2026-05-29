@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"money-management-service/internal/cache"
-	"money-management-service/internal/config"
-	"money-management-service/internal/model"
+	"money-tracker-service/internal/cache"
+	"money-tracker-service/internal/config"
+	"money-tracker-service/internal/model"
 )
 
 const (

@@ -7,8 +7,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"money-management-service/internal/cache"
-	"money-management-service/pkg/response"
+	"money-tracker-service/internal/cache"
+	"money-tracker-service/pkg/response"
 )
 
 func RateLimit(cache *cache.Cache, group string, limit int, window time.Duration) echo.MiddlewareFunc {

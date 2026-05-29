@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"money-management-service/internal/config"
+	"money-tracker-service/internal/config"
 )
 
 func TestSmartParserParsesExpense(t *testing.T) {

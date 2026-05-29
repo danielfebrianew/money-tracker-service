@@ -5,9 +5,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"money-management-service/internal/cache"
-	appmw "money-management-service/internal/middleware"
-	authmodule "money-management-service/internal/modules/auth"
+	"money-tracker-service/internal/cache"
+	appmw "money-tracker-service/internal/middleware"
+	authmodule "money-tracker-service/internal/modules/auth"
 )
 
 func RegisterRoutes(e *echo.Echo, h *Handler, cache *cache.Cache) {

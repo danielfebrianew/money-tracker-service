@@ -1,4 +1,4 @@
-module money-management-service
+module money-tracker-service
 
 go 1.26.1
 

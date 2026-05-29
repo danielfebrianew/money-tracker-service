@@ -7,9 +7,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"money-management-service/internal/pkg/cookie"
-	"money-management-service/internal/pkg/httphelper"
-	"money-management-service/pkg/response"
+	"money-tracker-service/internal/pkg/cookie"
+	"money-tracker-service/internal/pkg/httphelper"
+	"money-tracker-service/pkg/response"
 )
 
 var phonePattern = regexp.MustCompile(`^628\d{7,14}$`)

@@ -7,7 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
-	"money-management-service/internal/config"
+	"money-tracker-service/internal/config"
 )
 
 func ConnectPostgres(ctx context.Context, cfg config.Config) (*sqlx.DB, error) {

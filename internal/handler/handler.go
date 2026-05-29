@@ -1,18 +1,18 @@
 package handler
 
 import (
-	accountsmodule "money-management-service/internal/modules/accounts"
-	adminmodule "money-management-service/internal/modules/admin"
-	authmodule "money-management-service/internal/modules/auth"
-	balancemodule "money-management-service/internal/modules/balance"
-	dashboardmodule "money-management-service/internal/modules/dashboard"
-	groupsmodule "money-management-service/internal/modules/groups"
-	paymentsmodule "money-management-service/internal/modules/payments"
-	referralmodule "money-management-service/internal/modules/referral"
-	tokensmodule "money-management-service/internal/modules/tokens"
-	transactions "money-management-service/internal/modules/transactions"
-	usersmodule "money-management-service/internal/modules/users"
-	webhookmodule "money-management-service/internal/modules/webhook"
+	accountsmodule "money-tracker-service/internal/modules/accounts"
+	adminmodule "money-tracker-service/internal/modules/admin"
+	authmodule "money-tracker-service/internal/modules/auth"
+	balancemodule "money-tracker-service/internal/modules/balance"
+	dashboardmodule "money-tracker-service/internal/modules/dashboard"
+	groupsmodule "money-tracker-service/internal/modules/groups"
+	paymentsmodule "money-tracker-service/internal/modules/payments"
+	referralmodule "money-tracker-service/internal/modules/referral"
+	tokensmodule "money-tracker-service/internal/modules/tokens"
+	transactions "money-tracker-service/internal/modules/transactions"
+	usersmodule "money-tracker-service/internal/modules/users"
+	webhookmodule "money-tracker-service/internal/modules/webhook"
 )
 
 type Handler struct {

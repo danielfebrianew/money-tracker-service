@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"money-management-service/internal/cache"
-	"money-management-service/internal/model"
-	paymentsmodule "money-management-service/internal/modules/payments"
-	"money-management-service/internal/pkg/ids"
+	"money-tracker-service/internal/cache"
+	"money-tracker-service/internal/model"
+	paymentsmodule "money-tracker-service/internal/modules/payments"
+	"money-tracker-service/internal/pkg/ids"
 )
 
 type Service struct {
