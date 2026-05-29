@@ -52,10 +52,15 @@ func Error(c echo.Context, code int, message string) error {
 }
 
 func ValidationError(c echo.Context, errors map[string]string) error {
+	msg := "Validation failed"
+	for _, v := range errors {
+		msg = v
+		break
+	}
 	return c.JSON(http.StatusUnprocessableEntity, Response{
 		Code:    http.StatusUnprocessableEntity,
-		Message: "Validation failed",
-		Data:    map[string]interface{}{"errors": errors},
+		Message: msg,
+		Data:    nil,
 	})
 }
 

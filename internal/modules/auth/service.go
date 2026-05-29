@@ -27,10 +27,10 @@ func NewService(cfg config.Config, repository *Repository, cache *cache.Cache) *
 	return &Service{cfg: cfg, repository: repository, cache: cache}
 }
 
-func (s *Service) Register(ctx context.Context, phone, name string, email *string, password string, referralCode *string) (*model.User, *model.UserBalance, TokenPair, error) {
+func (s *Service) Register(ctx context.Context, phone, name string, email *string, password string, referralCode *string) (TokenPair, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), s.cfg.BcryptCost)
 	if err != nil {
-		return nil, nil, TokenPair{}, err
+		return TokenPair{}, err
 	}
 
 	now := time.Now().UTC()
@@ -46,17 +46,13 @@ func (s *Service) Register(ctx context.Context, phone, name string, email *strin
 		UpdatedAt:    now,
 	}
 	if err := s.repository.CreateUserWithBalance(ctx, user, referralCode); err != nil {
-		return nil, nil, TokenPair{}, err
-	}
-	balance, err := s.repository.GetBalance(ctx, user.ID)
-	if err != nil {
-		return nil, nil, TokenPair{}, err
+		return TokenPair{}, err
 	}
 	pair, err := s.NewUserTokenPair(ctx, user.ID, "user")
 	if err != nil {
-		return nil, nil, TokenPair{}, err
+		return TokenPair{}, err
 	}
-	return user, balance, pair, nil
+	return pair, nil
 }
 
 func (s *Service) Login(ctx context.Context, identifier, password string) (*model.User, *model.UserBalance, TokenPair, error) {

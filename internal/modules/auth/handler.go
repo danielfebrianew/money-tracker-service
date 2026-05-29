@@ -28,14 +28,12 @@ func (h *Handler) Register(c echo.Context) error {
 	if errs := validateRegister(req.Phone, req.Name, req.Email, req.Password); len(errs) > 0 {
 		return response.ValidationError(c, errs)
 	}
-	user, balance, pair, err := h.service.Register(c.Request().Context(), req.Phone, req.Name, req.Email, req.Password, req.ReferralCode)
+	pair, err := h.service.Register(c.Request().Context(), req.Phone, req.Name, req.Email, req.Password, req.ReferralCode)
 	if err != nil {
 		return respondError(c, err)
 	}
 	setAuthCookies(c, pair, AudienceUser)
 	return response.Created(c, map[string]interface{}{
-		"user":          user,
-		"balance":       balance,
 		"access_token":  pair.AccessToken,
 		"refresh_token": pair.RefreshToken,
 		"expires_in":    pair.ExpiresIn,

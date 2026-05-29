@@ -34,6 +34,9 @@ func (r *Repository) CreateUserWithBalance(ctx context.Context, user *model.User
 	`, user)
 	if err != nil {
 		if isDuplicate(err) {
+			if strings.Contains(err.Error(), "email") {
+				return apperror.New(apperror.ErrConflict, "Email sudah terdaftar")
+			}
 			return apperror.New(apperror.ErrConflict, "Nomor telepon sudah terdaftar")
 		}
 		return err
