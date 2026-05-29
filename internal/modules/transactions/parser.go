@@ -19,7 +19,7 @@ import (
 
 const (
 	defaultKieBaseURL         = "https://api.kie.ai"
-	defaultKieModel           = "gpt-5-4"
+	defaultKieModel           = "gpt-4o-mini"
 	defaultKieReasoningEffort = "low"
 )
 
