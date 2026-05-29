@@ -141,6 +141,15 @@ func (r *Repository) CountTransactions(ctx context.Context, userID string) int {
 	return total
 }
 
+func (r *Repository) GetReferralSignup(ctx context.Context, userID string) (*model.ReferralSignup, error) {
+	var signup model.ReferralSignup
+	err := r.db.GetContext(ctx, &signup, `SELECT * FROM referral_signups WHERE user_id = $1 LIMIT 1`, userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	return &signup, err
+}
+
 func (r *Repository) UpdateUserStatus(ctx context.Context, userID string, active bool) error {
 	res, err := r.db.ExecContext(ctx, `
 		UPDATE users SET is_active = $2, updated_at = NOW() WHERE id = $1

@@ -67,7 +67,7 @@ func Load() Config {
 		RedisPassword: env("REDIS_PASSWORD", ""),
 
 		OpenAIAPIKey:          envAny([]string{"KIE_AI_API_KEY", "OPENAI_API_KEY"}, ""),
-		OpenAIModel:           envAny([]string{"KIE_AI_MODEL", "OPENAI_MODEL"}, "gpt-5-4"),
+		OpenAIModel:           envAny([]string{"KIE_AI_MODEL", "OPENAI_MODEL"}, "gpt-4o-mini"),
 		OpenAIBaseURL:         envAny([]string{"KIE_AI_BASE_URL", "OPENAI_BASE_URL"}, "https://api.kie.ai"),
 		OpenAIReasoningEffort: envAny([]string{"KIE_AI_REASONING_EFFORT", "OPENAI_REASONING_EFFORT"}, "low"),
 

@@ -38,8 +38,8 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateUserCanTransact(ctx, user); err != nil {
-		return nil, err
+	if !user.IsActive {
+		return nil, apperror.New(apperror.ErrForbidden, "Akun dinonaktifkan. Hubungi admin.")
 	}
 	tx, err := s.buildTransaction(ctx, user, nil, input, nil)
 	if err != nil {
@@ -108,8 +108,8 @@ func (s *Service) CreateGroupTransaction(ctx context.Context, userID, groupID st
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateUserCanTransact(ctx, user); err != nil {
-		return nil, err
+	if !user.IsActive {
+		return nil, apperror.New(apperror.ErrForbidden, "Akun dinonaktifkan. Hubungi admin.")
 	}
 	if _, err := s.repository.GetMembership(ctx, groupID, userID); err != nil {
 		return nil, err

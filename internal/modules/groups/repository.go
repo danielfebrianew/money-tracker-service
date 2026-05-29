@@ -122,7 +122,7 @@ func (r *Repository) GetUserByPhone(ctx context.Context, phone string) (*model.U
 func (r *Repository) ListTransactionsForReport(ctx context.Context, groupID string, start, end time.Time) ([]model.Transaction, error) {
 	var items []model.Transaction
 	err := r.db.SelectContext(ctx, &items, `
-		SELECT id, user_id, group_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at
+		SELECT id, user_id, group_id, account_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at
 		FROM transactions
 		WHERE group_id = $1 AND created_at >= $2 AND created_at < $3
 		ORDER BY created_at DESC

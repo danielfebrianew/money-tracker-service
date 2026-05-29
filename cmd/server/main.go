@@ -24,6 +24,7 @@ import (
 	adminmodule "money-tracker-service/internal/modules/admin"
 	authmodule "money-tracker-service/internal/modules/auth"
 	balancemodule "money-tracker-service/internal/modules/balance"
+	budgetmodule "money-tracker-service/internal/modules/budget"
 	dashboardmodule "money-tracker-service/internal/modules/dashboard"
 	groupsmodule "money-tracker-service/internal/modules/groups"
 	paymentsmodule "money-tracker-service/internal/modules/payments"
@@ -77,6 +78,7 @@ func main() {
 	referralModule := referralmodule.NewModule(cfg, db)
 	adminModule := adminmodule.NewModule(authService, paymentModule.Service, adminmodule.NewRepository(db), appCache)
 	webhookModule := webhookmodule.NewModule(cfg, db, appCache, parser, fonnte, transactionService)
+	budgetModule := budgetmodule.NewModule(db)
 
 	if err := authService.SeedAdmin(ctx); err != nil {
 		log.Fatalf("seed admin: %v", err)
@@ -95,6 +97,7 @@ func main() {
 		Referral:     referralModule,
 		Admin:        adminModule,
 		Webhook:      webhookModule,
+		Budget:       budgetModule,
 	})
 
 	e := echo.New()

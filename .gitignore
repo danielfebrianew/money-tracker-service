@@ -1,6 +1,7 @@
 .env
 /server
 tmp/
+docs/
 
 uploads/proofs/*
 !uploads/proofs/.gitkeep

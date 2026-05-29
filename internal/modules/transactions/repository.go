@@ -82,7 +82,7 @@ func (r *Repository) List(ctx context.Context, params ListParams) ([]model.Trans
 	args = append(args, params.PerPage, offset(params.Page, params.PerPage))
 	var items []model.Transaction
 	err := r.db.SelectContext(ctx, &items, `
-		SELECT id, user_id, group_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at
+		SELECT id, user_id, group_id, account_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at
 		FROM transactions
 		WHERE `+whereSQL+`
 		ORDER BY created_at DESC
@@ -95,7 +95,7 @@ func (r *Repository) List(ctx context.Context, params ListParams) ([]model.Trans
 func (r *Repository) Get(ctx context.Context, txID, userID string) (*model.Transaction, error) {
 	var tx model.Transaction
 	err := r.db.GetContext(ctx, &tx, `
-		SELECT id, user_id, group_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at
+		SELECT id, user_id, group_id, account_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at
 		FROM transactions
 		WHERE id = $1 AND user_id = $2
 	`, txID, userID)

@@ -67,12 +67,17 @@ func (s *Service) UserDetail(ctx context.Context, userID string) (map[string]int
 	if err != nil {
 		return nil, err
 	}
+	referralSignup, _ := s.repository.GetReferralSignup(ctx, userID)
+	var registeredViaReferral *string
+	if referralSignup != nil {
+		registeredViaReferral = &referralSignup.ReferralCode
+	}
 	stats := map[string]interface{}{
 		"total_transactions":           s.repository.CountTransactions(ctx, userID),
 		"total_wa_messages_this_month": 0,
 		"total_ai_calls_this_month":    0,
 		"ai_cost_this_month":           0,
-		"registered_via_referral":      nil,
+		"registered_via_referral":      registeredViaReferral,
 		"member_since_days":            int(time.Since(user.CreatedAt).Hours() / 24),
 	}
 	return map[string]interface{}{"user": user, "balance": balance, "payments": payments, "stats": stats}, nil
