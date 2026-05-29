@@ -8,6 +8,7 @@ import (
 
 	"money-management-service/internal/model"
 	"money-management-service/internal/pkg/apperror"
+	"money-management-service/internal/pkg/httphelper"
 	"money-management-service/pkg/response"
 )
 
@@ -28,51 +29,51 @@ func (h *Handler) Create(c echo.Context) error {
 }
 
 func (h *Handler) List(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	filters, err := transactionFilters(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	items, total, err := h.service.List(c.Request().Context(), userID, filters)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	return response.Paginated(c, items, total, filters.Page, filters.PerPage)
 }
 
 func (h *Handler) Get(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	tx, err := h.service.Get(c.Request().Context(), userID, c.Param("id"))
 	if err != nil {
-		return respondError(c, apperror.New(apperror.ErrNotFound, "Transaksi tidak ditemukan"))
+		return httphelper.RespondError(c, apperror.New(apperror.ErrNotFound, "Transaksi tidak ditemukan"))
 	}
 	return response.Success(c, tx)
 }
 
 func (h *Handler) Delete(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	if err := h.service.Delete(c.Request().Context(), userID, c.Param("id")); err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	return response.Message(c, http.StatusOK, "Transaksi berhasil dihapus", nil)
 }
 
 func (h *Handler) create(c echo.Context, source string) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	var req CreateRequest
-	if err := bind(c, &req); err != nil {
+	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
 	if req.Deskripsi == "" || req.Jumlah <= 0 || !validTipe(req.Tipe) {
@@ -87,7 +88,7 @@ func (h *Handler) create(c echo.Context, source string) error {
 		AccountID: req.AccountID,
 	})
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	return response.Created(c, tx)
 }
@@ -97,7 +98,7 @@ func validTipe(tipe string) bool {
 }
 
 func transactionFilters(c echo.Context) (model.TransactionFilters, error) {
-	page, perPage := pagination(c)
+	page, perPage := httphelper.Pagination(c)
 	filters := model.TransactionFilters{
 		Page:     page,
 		PerPage:  perPage,

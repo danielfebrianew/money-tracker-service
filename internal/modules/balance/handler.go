@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"money-management-service/internal/pkg/httphelper"
 	"money-management-service/pkg/response"
 )
 
@@ -17,13 +18,13 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) Get(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	balance, err := h.service.GetBalance(c.Request().Context(), userID)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	daysRemaining := 0
 	if balance.ExpiresAt != nil {

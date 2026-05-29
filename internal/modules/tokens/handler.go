@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"money-management-service/internal/pkg/apperror"
+	"money-management-service/internal/pkg/httphelper"
 	"money-management-service/pkg/response"
 )
 
@@ -19,24 +20,24 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) List(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	tokens, err := h.service.List(c.Request().Context(), userID)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	return response.Success(c, tokens)
 }
 
 func (h *Handler) Create(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	var req CreateRequest
-	if err := bind(c, &req); err != nil {
+	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
 	if strings.TrimSpace(req.Name) == "" {
@@ -44,18 +45,18 @@ func (h *Handler) Create(c echo.Context) error {
 	}
 	token, err := h.service.Create(c.Request().Context(), userID, req.Name)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	return response.Created(c, token)
 }
 
 func (h *Handler) Delete(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	if err := h.service.Delete(c.Request().Context(), userID, c.Param("id")); err != nil {
-		return respondError(c, apperror.New(apperror.ErrNotFound, "Token tidak ditemukan"))
+		return httphelper.RespondError(c, apperror.New(apperror.ErrNotFound, "Token tidak ditemukan"))
 	}
 	return response.Message(c, http.StatusOK, "Token berhasil dihapus", nil)
 }

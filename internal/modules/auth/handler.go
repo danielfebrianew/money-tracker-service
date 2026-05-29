@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"money-management-service/internal/pkg/httphelper"
 	"money-management-service/pkg/response"
 )
 
@@ -22,7 +23,7 @@ func NewHandler(service *Service) *Handler {
 
 func (h *Handler) Register(c echo.Context) error {
 	var req RegisterRequest
-	if err := bind(c, &req); err != nil {
+	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
 	if errs := validateRegister(req.Phone, req.Name, req.Email, req.Password); len(errs) > 0 {
@@ -30,7 +31,7 @@ func (h *Handler) Register(c echo.Context) error {
 	}
 	pair, err := h.service.Register(c.Request().Context(), req.Phone, req.Name, req.Email, req.Password, req.ReferralCode)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	setAuthCookies(c, pair, AudienceUser)
 	return response.Created(c, map[string]interface{}{
@@ -42,12 +43,12 @@ func (h *Handler) Register(c echo.Context) error {
 
 func (h *Handler) Login(c echo.Context) error {
 	var req LoginRequest
-	if err := bind(c, &req); err != nil {
+	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
 	_, _, pair, err := h.service.Login(c.Request().Context(), req.Identifier, req.Password)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	setAuthCookies(c, pair, AudienceUser)
 	return response.Success(c, map[string]interface{}{
@@ -64,7 +65,7 @@ func (h *Handler) Refresh(c echo.Context) error {
 	}
 	pair, err := h.service.Refresh(c.Request().Context(), refreshToken)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	setAuthCookies(c, pair, AudienceUser)
 	return response.Success(c, map[string]interface{}{
@@ -75,31 +76,31 @@ func (h *Handler) Refresh(c echo.Context) error {
 }
 
 func (h *Handler) Logout(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	if err := h.service.Logout(c.Request().Context(), userID, refreshTokenFromRequest(c, UserRefreshCookie)); err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	clearAuthCookies(c, AudienceUser)
 	return response.Message(c, http.StatusOK, "Berhasil logout", nil)
 }
 
 func (h *Handler) ChangePassword(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	var req ChangePasswordRequest
-	if err := bind(c, &req); err != nil {
+	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
 	if req.CurrentPassword == "" || len(req.NewPassword) < 8 || req.CurrentPassword == req.NewPassword {
 		return response.ValidationError(c, map[string]string{"new_password": "Minimal 8 karakter dan harus berbeda"})
 	}
 	if err := h.service.ChangePassword(c.Request().Context(), userID, req.CurrentPassword, req.NewPassword); err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	return response.Message(c, http.StatusOK, "Password berhasil diubah", nil)
 }

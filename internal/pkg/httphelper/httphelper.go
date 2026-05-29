@@ -1,8 +1,9 @@
-package balance
+package httphelper
 
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 
@@ -10,7 +11,14 @@ import (
 	"money-management-service/pkg/response"
 )
 
-func requireUserID(c echo.Context) (string, error) {
+func Bind(c echo.Context, dest interface{}) error {
+	if err := c.Bind(dest); err != nil {
+		return response.Error(c, http.StatusBadRequest, "Request tidak valid")
+	}
+	return nil
+}
+
+func RequireUserID(c echo.Context) (string, error) {
 	userID, _ := c.Get("user_id").(string)
 	if userID == "" {
 		return "", apperror.ErrUnauthorized
@@ -18,7 +26,30 @@ func requireUserID(c echo.Context) (string, error) {
 	return userID, nil
 }
 
-func respondError(c echo.Context, err error) error {
+func RequireAdminID(c echo.Context) (string, error) {
+	adminID, _ := c.Get("admin_id").(string)
+	if adminID == "" {
+		return "", apperror.ErrUnauthorized
+	}
+	return adminID, nil
+}
+
+func Pagination(c echo.Context) (int, int) {
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	perPage, _ := strconv.Atoi(c.QueryParam("per_page"))
+	if page < 1 {
+		page = 1
+	}
+	if perPage < 1 {
+		perPage = 20
+	}
+	if perPage > 100 {
+		perPage = 100
+	}
+	return page, perPage
+}
+
+func RespondError(c echo.Context, err error) error {
 	var appErr *apperror.AppError
 	if errors.As(err, &appErr) {
 		if appErr.Fields != nil {
@@ -26,14 +57,14 @@ func respondError(c echo.Context, err error) error {
 		}
 		message := appErr.Message
 		if message == "" {
-			message = friendlyMessage(appErr.Err)
+			message = FriendlyMessage(appErr.Err)
 		}
-		return response.Error(c, statusCode(appErr.Err), message)
+		return response.Error(c, StatusCode(appErr.Err), message)
 	}
-	return response.Error(c, statusCode(err), friendlyMessage(err))
+	return response.Error(c, StatusCode(err), FriendlyMessage(err))
 }
 
-func statusCode(err error) int {
+func StatusCode(err error) int {
 	switch {
 	case errors.Is(err, apperror.ErrNotFound):
 		return http.StatusNotFound
@@ -56,7 +87,7 @@ func statusCode(err error) int {
 	}
 }
 
-func friendlyMessage(err error) string {
+func FriendlyMessage(err error) string {
 	switch {
 	case errors.Is(err, apperror.ErrNotFound):
 		return "Data tidak ditemukan"

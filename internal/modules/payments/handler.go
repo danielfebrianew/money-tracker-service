@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"money-management-service/internal/pkg/apperror"
+	"money-management-service/internal/pkg/httphelper"
 	"money-management-service/internal/pkg/ids"
 	"money-management-service/pkg/response"
 )
@@ -24,19 +25,19 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) CreateTopup(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	amount, _ := strconv.Atoi(c.FormValue("amount"))
 	description := optionalString(c.FormValue("description"))
 	proofURL, err := saveProof(c, userID)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	payment, err := h.service.CreateTopup(c.Request().Context(), userID, amount, description, proofURL)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	return response.Created(c, TopupResponse{
 		PaymentID: payment.ID,
@@ -47,14 +48,14 @@ func (h *Handler) CreateTopup(c echo.Context) error {
 }
 
 func (h *Handler) List(c echo.Context) error {
-	userID, err := requireUserID(c)
+	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
-	page, perPage := pagination(c)
+	page, perPage := httphelper.Pagination(c)
 	items, total, err := h.service.ListUser(c.Request().Context(), userID, c.QueryParam("status"), page, perPage)
 	if err != nil {
-		return respondError(c, err)
+		return httphelper.RespondError(c, err)
 	}
 	return response.Paginated(c, items, total, page, perPage)
 }
