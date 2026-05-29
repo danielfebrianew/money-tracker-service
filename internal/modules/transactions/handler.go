@@ -43,13 +43,15 @@ func (h *Handler) Create(c echo.Context) error {
 // @Tags         Transactions
 // @Security     BearerAuth
 // @Produce      json
-// @Param        page     query int    false "Halaman"
-// @Param        per_page query int    false "Jumlah per halaman"
-// @Param        tipe     query string false "IN / OUT / TRANSFER"
-// @Param        kategori query string false "Kategori"
-// @Param        search   query string false "Kata kunci"
-// @Param        from     query string false "Dari tanggal (YYYY-MM-DD)"
-// @Param        to       query string false "Sampai tanggal (YYYY-MM-DD)"
+// @Param        page       query int    false "Halaman"
+// @Param        per_page   query int    false "Jumlah per halaman"
+// @Param        tipe       query string false "IN / OUT / TRANSFER"
+// @Param        kategori   query string false "Kategori"
+// @Param        account_id query string false "Filter by akun"
+// @Param        search     query string false "Kata kunci deskripsi"
+// @Param        month      query string false "Bulan (YYYY-MM), shortcut from+to"
+// @Param        from       query string false "Dari tanggal (YYYY-MM-DD)"
+// @Param        to         query string false "Sampai tanggal (YYYY-MM-DD)"
 // @Success      200 {object} response.Response
 // @Router       /transactions [get]
 func (h *Handler) List(c echo.Context) error {
@@ -154,19 +156,29 @@ func transactionFilters(c echo.Context) (model.TransactionFilters, error) {
 	if filters.Tipe != "" && !validTipe(filters.Tipe) {
 		return filters, apperror.New(apperror.ErrValidation, "Tipe harus IN, OUT, atau TRANSFER")
 	}
-	if from := c.QueryParam("from"); from != "" {
-		parsed, err := time.Parse("2006-01-02", from)
+	if month := c.QueryParam("month"); month != "" {
+		start, err := time.Parse("2006-01", month)
 		if err != nil {
-			return filters, apperror.New(apperror.ErrValidation, "Format from harus YYYY-MM-DD")
+			return filters, apperror.New(apperror.ErrValidation, "Format month harus YYYY-MM")
 		}
-		filters.From = &parsed
-	}
-	if to := c.QueryParam("to"); to != "" {
-		parsed, err := time.Parse("2006-01-02", to)
-		if err != nil {
-			return filters, apperror.New(apperror.ErrValidation, "Format to harus YYYY-MM-DD")
+		end := start.AddDate(0, 1, 0)
+		filters.From = &start
+		filters.To = &end
+	} else {
+		if from := c.QueryParam("from"); from != "" {
+			parsed, err := time.Parse("2006-01-02", from)
+			if err != nil {
+				return filters, apperror.New(apperror.ErrValidation, "Format from harus YYYY-MM-DD")
+			}
+			filters.From = &parsed
 		}
-		filters.To = &parsed
+		if to := c.QueryParam("to"); to != "" {
+			parsed, err := time.Parse("2006-01-02", to)
+			if err != nil {
+				return filters, apperror.New(apperror.ErrValidation, "Format to harus YYYY-MM-DD")
+			}
+			filters.To = &parsed
+		}
 	}
 	return filters, nil
 }

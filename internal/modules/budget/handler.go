@@ -2,11 +2,9 @@ package budget
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/labstack/echo/v4"
 
-	"money-tracker-service/internal/pkg/apperror"
 	"money-tracker-service/internal/pkg/httphelper"
 	"money-tracker-service/pkg/response"
 )
@@ -37,6 +35,27 @@ func (h *Handler) List(c echo.Context) error {
 		return httphelper.RespondError(c, err)
 	}
 	return response.Success(c, items)
+}
+
+// Detail godoc
+// @Summary      Detail budget beserta rincian transaksi
+// @Tags         Budget
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id path string true "Budget ID"
+// @Success      200 {object} response.Response
+// @Failure      404 {object} response.Response
+// @Router       /budgets/{id} [get]
+func (h *Handler) Detail(c echo.Context) error {
+	userID, err := httphelper.RequireUserID(c)
+	if err != nil {
+		return httphelper.RespondError(c, err)
+	}
+	detail, err := h.service.Detail(c.Request().Context(), userID, c.Param("id"))
+	if err != nil {
+		return httphelper.RespondError(c, err)
+	}
+	return response.Success(c, detail)
 }
 
 // Create godoc
@@ -113,31 +132,3 @@ func (h *Handler) Delete(c echo.Context) error {
 	return response.Message(c, http.StatusOK, "Budget berhasil dihapus.", nil)
 }
 
-// History godoc
-// @Summary      Histori pengeluaran per kategori
-// @Tags         Budget
-// @Security     BearerAuth
-// @Produce      json
-// @Param        kategori query string false "Filter kategori"
-// @Param        months   query int    false "Jumlah bulan ke belakang (default 3, max 12)"
-// @Success      200 {object} response.Response
-// @Router       /budgets/history [get]
-func (h *Handler) History(c echo.Context) error {
-	userID, err := httphelper.RequireUserID(c)
-	if err != nil {
-		return httphelper.RespondError(c, err)
-	}
-	months := 3
-	if m := c.QueryParam("months"); m != "" {
-		if v, err := strconv.Atoi(m); err == nil {
-			months = v
-		} else {
-			return httphelper.RespondError(c, apperror.New(apperror.ErrValidation, "Parameter months harus berupa angka"))
-		}
-	}
-	items, err := h.service.History(c.Request().Context(), userID, c.QueryParam("kategori"), months)
-	if err != nil {
-		return httphelper.RespondError(c, err)
-	}
-	return response.Success(c, items)
-}

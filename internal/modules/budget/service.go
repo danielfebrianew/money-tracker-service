@@ -55,6 +55,18 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 	return s.repository.Get(ctx, b.ID, userID)
 }
 
+func (s *Service) Detail(ctx context.Context, userID, id string) (*model.BudgetDetail, error) {
+	budget, err := s.repository.Get(ctx, id, userID)
+	if err != nil {
+		return nil, apperror.New(apperror.ErrNotFound, "Budget tidak ditemukan")
+	}
+	txs, err := s.repository.GetTransactions(ctx, userID, budget.Kategori, budget.Month)
+	if err != nil {
+		return nil, err
+	}
+	return &model.BudgetDetail{BudgetWithSpent: *budget, Transactions: txs}, nil
+}
+
 func (s *Service) Update(ctx context.Context, userID, id string, limit int) (*model.BudgetWithSpent, error) {
 	if limit <= 0 {
 		return nil, apperror.New(apperror.ErrValidation, "Limit harus lebih dari 0")
@@ -72,12 +84,6 @@ func (s *Service) Delete(ctx context.Context, userID, id string) error {
 	return nil
 }
 
-func (s *Service) History(ctx context.Context, userID, kategori string, months int) ([]model.BudgetHistory, error) {
-	if months <= 0 || months > 12 {
-		months = 3
-	}
-	return s.repository.History(ctx, userID, kategori, months)
-}
 
 func normalizeMonth(month string) string {
 	month = strings.TrimSpace(month)

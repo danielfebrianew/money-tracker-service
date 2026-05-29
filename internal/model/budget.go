@@ -17,8 +17,8 @@ type BudgetWithSpent struct {
 	Spent int `json:"spent" db:"spent"`
 }
 
-type BudgetHistory struct {
-	Month      string `json:"month" db:"month"`
-	Kategori   string `json:"kategori" db:"kategori"`
-	TotalSpent int    `json:"total_spent" db:"total_spent"`
+type BudgetDetail struct {
+	BudgetWithSpent
+	Transactions []Transaction `json:"transactions"`
 }
+

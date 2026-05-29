@@ -25,7 +25,7 @@ func NewModule(db *sqlx.DB) *Module {
 func (m *Module) RegisterUserRoutes(api *echo.Group) {
 	api.GET("/budgets", m.Handler.List)
 	api.POST("/budgets", m.Handler.Create)
+	api.GET("/budgets/:id", m.Handler.Detail)
 	api.PUT("/budgets/:id", m.Handler.Update)
 	api.DELETE("/budgets/:id", m.Handler.Delete)
-	api.GET("/budgets/history", m.Handler.History)
 }

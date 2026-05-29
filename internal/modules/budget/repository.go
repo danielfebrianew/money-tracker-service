@@ -57,6 +57,20 @@ func (r *Repository) Get(ctx context.Context, id, userID string) (*model.BudgetW
 	return &item, err
 }
 
+func (r *Repository) GetTransactions(ctx context.Context, userID, kategori, month string) ([]model.Transaction, error) {
+	var items []model.Transaction
+	err := r.db.SelectContext(ctx, &items, `
+		SELECT id, user_id, group_id, account_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at
+		FROM transactions
+		WHERE user_id = $1
+		  AND kategori = $2
+		  AND tipe = 'OUT'
+		  AND to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM') = $3
+		ORDER BY created_at DESC
+	`, userID, kategori, month)
+	return items, err
+}
+
 func (r *Repository) ExistsForMonth(ctx context.Context, userID, kategori, month string) (bool, error) {
 	var count int
 	err := r.db.GetContext(ctx, &count, `
@@ -99,34 +113,3 @@ func (r *Repository) Delete(ctx context.Context, id, userID string) error {
 	return nil
 }
 
-func (r *Repository) History(ctx context.Context, userID, kategori string, months int) ([]model.BudgetHistory, error) {
-	var items []model.BudgetHistory
-	var err error
-	if kategori != "" {
-		err = r.db.SelectContext(ctx, &items, `
-			SELECT to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM') AS month,
-			       kategori,
-			       COALESCE(SUM(jumlah), 0) AS total_spent
-			FROM transactions
-			WHERE user_id = $1
-			  AND kategori = $2
-			  AND tipe = 'OUT'
-			  AND created_at >= date_trunc('month', NOW()) - ($3 - 1) * INTERVAL '1 month'
-			GROUP BY month, kategori
-			ORDER BY month ASC
-		`, userID, kategori, months)
-	} else {
-		err = r.db.SelectContext(ctx, &items, `
-			SELECT to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM') AS month,
-			       kategori,
-			       COALESCE(SUM(jumlah), 0) AS total_spent
-			FROM transactions
-			WHERE user_id = $1
-			  AND tipe = 'OUT'
-			  AND created_at >= date_trunc('month', NOW()) - ($2 - 1) * INTERVAL '1 month'
-			GROUP BY month, kategori
-			ORDER BY month ASC, kategori ASC
-		`, userID, months)
-	}
-	return items, err
-}
