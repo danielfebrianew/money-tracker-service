@@ -10,7 +10,21 @@ import (
 	"money-tracker-service/internal/pkg/ids"
 )
 
-var validTypes = map[string]bool{"bank": true, "ewallet": true, "cash": true}
+var validTypes = map[string]bool{"bank": true, "ewallet": true, "cash": true, "credit_card": true}
+
+var defaultIcon = map[string]string{
+	"bank":        "bank",
+	"ewallet":     "wallet",
+	"cash":        "cash",
+	"credit_card": "credit-card",
+}
+
+var defaultColor = map[string]string{
+	"bank":        "#0066AE",
+	"ewallet":     "#00AED6",
+	"cash":        "#4CAF50",
+	"credit_card": "#9C27B0",
+}
 
 type Service struct {
 	repository *Repository
@@ -35,15 +49,30 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 		return nil, apperror.New(apperror.ErrValidation, "Nama akun wajib diisi dan maksimal 100 karakter")
 	}
 	if !validTypes[typ] {
-		return nil, apperror.New(apperror.ErrValidation, "Tipe akun harus bank, ewallet, atau cash")
+		return nil, apperror.New(apperror.ErrValidation, "Tipe akun harus bank, ewallet, cash, atau credit_card")
 	}
+	if input.Balance < 0 {
+		return nil, apperror.New(apperror.ErrValidation, "Saldo awal tidak boleh negatif")
+	}
+	icon := strings.TrimSpace(input.Icon)
+	if icon == "" {
+		icon = defaultIcon[typ]
+	}
+	color := strings.TrimSpace(input.Color)
+	if color == "" {
+		color = defaultColor[typ]
+	}
+	now := time.Now()
 	account := &model.Account{
 		ID:        ids.New("acc"),
 		UserID:    userID,
 		Name:      name,
 		Type:      typ,
-		Balance:   0,
-		CreatedAt: time.Now(),
+		Balance:   input.Balance,
+		Icon:      icon,
+		Color:     color,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 	if err := s.repository.Create(ctx, account); err != nil {
 		return nil, err
@@ -63,13 +92,13 @@ func (s *Service) Update(ctx context.Context, id, userID string, input UpdateInp
 		}
 		account.Name = name
 	}
-	if input.Type != nil {
-		typ := strings.TrimSpace(*input.Type)
-		if !validTypes[typ] {
-			return nil, apperror.New(apperror.ErrValidation, "Tipe akun harus bank, ewallet, atau cash")
-		}
-		account.Type = typ
+	if input.Icon != nil {
+		account.Icon = strings.TrimSpace(*input.Icon)
 	}
+	if input.Color != nil {
+		account.Color = strings.TrimSpace(*input.Color)
+	}
+	account.UpdatedAt = time.Now()
 	if err := s.repository.Update(ctx, account); err != nil {
 		return nil, err
 	}

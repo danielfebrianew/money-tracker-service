@@ -26,7 +26,7 @@ func (r *Repository) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 func (r *Repository) List(ctx context.Context, userID string) ([]model.Account, error) {
 	var items []model.Account
 	err := r.db.SelectContext(ctx, &items, `
-		SELECT id, user_id, name, type, balance, created_at
+		SELECT id, user_id, name, type, balance, icon, color, created_at, updated_at
 		FROM accounts
 		WHERE user_id = $1
 		ORDER BY created_at DESC
@@ -40,7 +40,7 @@ func (r *Repository) List(ctx context.Context, userID string) ([]model.Account, 
 func (r *Repository) Get(ctx context.Context, id, userID string) (*model.Account, error) {
 	var account model.Account
 	err := r.db.GetContext(ctx, &account, `
-		SELECT id, user_id, name, type, balance, created_at
+		SELECT id, user_id, name, type, balance, icon, color, created_at, updated_at
 		FROM accounts
 		WHERE id = $1 AND user_id = $2
 	`, id, userID)
@@ -52,16 +52,16 @@ func (r *Repository) Get(ctx context.Context, id, userID string) (*model.Account
 
 func (r *Repository) Create(ctx context.Context, account *model.Account) error {
 	_, err := r.db.NamedExecContext(ctx, `
-		INSERT INTO accounts (id, user_id, name, type, balance, created_at)
-		VALUES (:id, :user_id, :name, :type, :balance, :created_at)
+		INSERT INTO accounts (id, user_id, name, type, balance, icon, color, created_at, updated_at)
+		VALUES (:id, :user_id, :name, :type, :balance, :icon, :color, :created_at, :updated_at)
 	`, account)
 	return err
 }
 
 func (r *Repository) Update(ctx context.Context, account *model.Account) error {
 	_, err := r.db.ExecContext(ctx, `
-		UPDATE accounts SET name = $1, type = $2 WHERE id = $3 AND user_id = $4
-	`, account.Name, account.Type, account.ID, account.UserID)
+		UPDATE accounts SET name = $1, icon = $2, color = $3, updated_at = $4 WHERE id = $5 AND user_id = $6
+	`, account.Name, account.Icon, account.Color, account.UpdatedAt, account.ID, account.UserID)
 	return err
 }
 

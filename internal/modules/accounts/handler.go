@@ -51,8 +51,11 @@ func (h *Handler) Create(c echo.Context) error {
 		return err
 	}
 	account, err := h.service.Create(c.Request().Context(), userID, CreateInput{
-		Name: req.Name,
-		Type: req.Type,
+		Name:    req.Name,
+		Type:    req.Type,
+		Balance: req.Balance,
+		Icon:    req.Icon,
+		Color:   req.Color,
 	})
 	if err != nil {
 		return httphelper.RespondError(c, err)
@@ -70,8 +73,9 @@ func (h *Handler) Update(c echo.Context) error {
 		return err
 	}
 	account, err := h.service.Update(c.Request().Context(), c.Param("id"), userID, UpdateInput{
-		Name: req.Name,
-		Type: req.Type,
+		Name:  req.Name,
+		Icon:  req.Icon,
+		Color: req.Color,
 	})
 	if err != nil {
 		return httphelper.RespondError(c, err)
