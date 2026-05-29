@@ -1,6 +1,17 @@
+// @title           Money Tracker API
+// @version         1.0
+// @description     REST API untuk aplikasi pencatat keuangan pribadi.
+// @host            localhost:8080
+// @BasePath        /api
+// @securityDefinitions.apikey BearerAuth
+// @in              header
+// @name            Authorization
+// @description     Masukkan token dengan format: Bearer {token}
+
 package main
 
 import (
+	_ "money-tracker-service/docs"
 	"context"
 	"errors"
 	"log"
@@ -25,6 +36,7 @@ import (
 	authmodule "money-tracker-service/internal/modules/auth"
 	balancemodule "money-tracker-service/internal/modules/balance"
 	budgetmodule "money-tracker-service/internal/modules/budget"
+	categoriesmodule "money-tracker-service/internal/modules/categories"
 	dashboardmodule "money-tracker-service/internal/modules/dashboard"
 	groupsmodule "money-tracker-service/internal/modules/groups"
 	paymentsmodule "money-tracker-service/internal/modules/payments"
@@ -79,6 +91,10 @@ func main() {
 	adminModule := adminmodule.NewModule(authService, paymentModule.Service, adminmodule.NewRepository(db), appCache)
 	webhookModule := webhookmodule.NewModule(cfg, db, appCache, parser, fonnte, transactionService)
 	budgetModule := budgetmodule.NewModule(db)
+	categoryModule := categoriesmodule.NewModule(db)
+
+	authModule.Service.SetCategorySeeder(categoryModule.Service)
+	transactionModule.Service.SetCategoryValidator(categoryModule.Service)
 
 	if err := authService.SeedAdmin(ctx); err != nil {
 		log.Fatalf("seed admin: %v", err)
@@ -98,6 +114,7 @@ func main() {
 		Admin:        adminModule,
 		Webhook:      webhookModule,
 		Budget:       budgetModule,
+		Categories:   categoryModule,
 	})
 
 	e := echo.New()
@@ -108,6 +125,7 @@ func main() {
 	e.Use(echoMiddleware.CORSWithConfig(appmw.CORS(cfg)))
 
 	handler.RegisterRoutes(e, h, appCache)
+	handler.RegisterDocsRoutes(e)
 	startCron(ctx, balanceService)
 
 	go func() {

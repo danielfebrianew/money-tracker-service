@@ -24,10 +24,34 @@ func (h *Handler) Shortcut(c echo.Context) error {
 	return h.create(c, "shortcut")
 }
 
+// Create godoc
+// @Summary      Buat transaksi baru
+// @Tags         Transactions
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        body body CreateRequest true "Data transaksi"
+// @Success      201 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Router       /transactions [post]
 func (h *Handler) Create(c echo.Context) error {
 	return h.create(c, "dashboard")
 }
 
+// List godoc
+// @Summary      Daftar transaksi
+// @Tags         Transactions
+// @Security     BearerAuth
+// @Produce      json
+// @Param        page     query int    false "Halaman"
+// @Param        per_page query int    false "Jumlah per halaman"
+// @Param        tipe     query string false "IN / OUT / TRANSFER"
+// @Param        kategori query string false "Kategori"
+// @Param        search   query string false "Kata kunci"
+// @Param        from     query string false "Dari tanggal (YYYY-MM-DD)"
+// @Param        to       query string false "Sampai tanggal (YYYY-MM-DD)"
+// @Success      200 {object} response.Response
+// @Router       /transactions [get]
 func (h *Handler) List(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -44,6 +68,15 @@ func (h *Handler) List(c echo.Context) error {
 	return response.Paginated(c, items, total, filters.Page, filters.PerPage)
 }
 
+// Get godoc
+// @Summary      Detail transaksi
+// @Tags         Transactions
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id path string true "Transaction ID"
+// @Success      200 {object} response.Response
+// @Failure      404 {object} response.Response
+// @Router       /transactions/{id} [get]
 func (h *Handler) Get(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -56,6 +89,15 @@ func (h *Handler) Get(c echo.Context) error {
 	return response.Success(c, tx)
 }
 
+// Delete godoc
+// @Summary      Hapus transaksi
+// @Tags         Transactions
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id path string true "Transaction ID"
+// @Success      200 {object} response.Response
+// @Failure      404 {object} response.Response
+// @Router       /transactions/{id} [delete]
 func (h *Handler) Delete(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {

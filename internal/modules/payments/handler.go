@@ -24,6 +24,18 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+// CreateTopup godoc
+// @Summary      Ajukan top-up token
+// @Tags         Payments
+// @Security     BearerAuth
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        amount      formData int    true  "Jumlah top-up"
+// @Param        description formData string false "Keterangan"
+// @Param        proof       formData file   false "Bukti transfer (maks 5MB)"
+// @Success      201 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Router       /payments/topup [post]
 func (h *Handler) CreateTopup(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -47,6 +59,16 @@ func (h *Handler) CreateTopup(c echo.Context) error {
 	})
 }
 
+// List godoc
+// @Summary      Riwayat pembayaran user
+// @Tags         Payments
+// @Security     BearerAuth
+// @Produce      json
+// @Param        status   query string false "Filter status: pending / verified / rejected"
+// @Param        page     query int    false "Halaman"
+// @Param        per_page query int    false "Jumlah per halaman"
+// @Success      200 {object} response.Response
+// @Router       /payments [get]
 func (h *Handler) List(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {

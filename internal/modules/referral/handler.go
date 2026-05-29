@@ -15,6 +15,13 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+// Summary godoc
+// @Summary      Ringkasan referral user
+// @Tags         Referral
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200 {object} response.Response
+// @Router       /referral/summary [get]
 func (h *Handler) Summary(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -27,6 +34,13 @@ func (h *Handler) Summary(c echo.Context) error {
 	return response.Success(c, data)
 }
 
+// Generate godoc
+// @Summary      Generate kode referral baru
+// @Tags         Referral
+// @Security     BearerAuth
+// @Produce      json
+// @Success      201 {object} response.Response
+// @Router       /referral/generate [post]
 func (h *Handler) Generate(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {

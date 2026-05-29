@@ -19,6 +19,14 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+// List godoc
+// @Summary      Daftar budget per bulan
+// @Tags         Budget
+// @Security     BearerAuth
+// @Produce      json
+// @Param        month query string false "Bulan (YYYY-MM), default bulan berjalan"
+// @Success      200 {object} response.Response
+// @Router       /budgets [get]
 func (h *Handler) List(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -31,6 +39,17 @@ func (h *Handler) List(c echo.Context) error {
 	return response.Success(c, items)
 }
 
+// Create godoc
+// @Summary      Buat budget baru
+// @Tags         Budget
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        body body CreateInput true "Data budget"
+// @Success      201 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Failure      409 {object} response.Response
+// @Router       /budgets [post]
 func (h *Handler) Create(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -47,6 +66,17 @@ func (h *Handler) Create(c echo.Context) error {
 	return response.Message(c, http.StatusCreated, "Budget berhasil dibuat.", budget)
 }
 
+// Update godoc
+// @Summary      Update limit budget
+// @Tags         Budget
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id   path string      true "Budget ID"
+// @Param        body body UpdateInput true "Limit baru"
+// @Success      200 {object} response.Response
+// @Failure      404 {object} response.Response
+// @Router       /budgets/{id} [put]
 func (h *Handler) Update(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -63,6 +93,15 @@ func (h *Handler) Update(c echo.Context) error {
 	return response.Message(c, http.StatusOK, "Budget berhasil diperbarui.", budget)
 }
 
+// Delete godoc
+// @Summary      Hapus budget
+// @Tags         Budget
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id path string true "Budget ID"
+// @Success      200 {object} response.Response
+// @Failure      404 {object} response.Response
+// @Router       /budgets/{id} [delete]
 func (h *Handler) Delete(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -74,6 +113,15 @@ func (h *Handler) Delete(c echo.Context) error {
 	return response.Message(c, http.StatusOK, "Budget berhasil dihapus.", nil)
 }
 
+// History godoc
+// @Summary      Histori pengeluaran per kategori
+// @Tags         Budget
+// @Security     BearerAuth
+// @Produce      json
+// @Param        kategori query string false "Filter kategori"
+// @Param        months   query int    false "Jumlah bulan ke belakang (default 3, max 12)"
+// @Success      200 {object} response.Response
+// @Router       /budgets/history [get]
 func (h *Handler) History(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {

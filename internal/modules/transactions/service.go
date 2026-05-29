@@ -22,15 +22,24 @@ type AccountUpdater interface {
 	Get(ctx context.Context, id, userID string) (*model.Account, error)
 }
 
+type CategoryValidator interface {
+	IsValidForUser(ctx context.Context, userID, name string) (bool, error)
+}
+
 type Service struct {
-	repository     *Repository
-	cache          *cache.Cache
-	parser         Parser
-	accountUpdater AccountUpdater
+	repository        *Repository
+	cache             *cache.Cache
+	parser            Parser
+	accountUpdater    AccountUpdater
+	categoryValidator CategoryValidator
 }
 
 func NewService(repository *Repository, cache *cache.Cache, parser Parser, accountUpdater AccountUpdater) *Service {
 	return &Service{repository: repository, cache: cache, parser: parser, accountUpdater: accountUpdater}
+}
+
+func (s *Service) SetCategoryValidator(v CategoryValidator) {
+	s.categoryValidator = v
 }
 
 func (s *Service) Create(ctx context.Context, userID string, input CreateInput) (*model.Transaction, error) {
@@ -236,6 +245,11 @@ func (s *Service) buildTransaction(ctx context.Context, user *model.User, groupI
 	}
 	if kategori == "" {
 		kategori = "Lainnya"
+	}
+	if s.categoryValidator != nil && kategori != "Lainnya" {
+		if valid, _ := s.categoryValidator.IsValidForUser(ctx, user.ID, kategori); !valid {
+			kategori = "Lainnya"
+		}
 	}
 	if len(kategori) > 50 {
 		kategori = kategori[:50]

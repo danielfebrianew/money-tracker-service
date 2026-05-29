@@ -6,6 +6,7 @@ import (
 	authmodule "money-tracker-service/internal/modules/auth"
 	balancemodule "money-tracker-service/internal/modules/balance"
 	budgetmodule "money-tracker-service/internal/modules/budget"
+	categoriesmodule "money-tracker-service/internal/modules/categories"
 	dashboardmodule "money-tracker-service/internal/modules/dashboard"
 	groupsmodule "money-tracker-service/internal/modules/groups"
 	paymentsmodule "money-tracker-service/internal/modules/payments"
@@ -31,6 +32,7 @@ type Handler struct {
 	Admin        *adminmodule.Module
 	Webhook      *webhookmodule.Module
 	Budget       *budgetmodule.Module
+	Categories   *categoriesmodule.Module
 }
 
 type Dependencies struct {
@@ -47,6 +49,7 @@ type Dependencies struct {
 	Admin        *adminmodule.Module
 	Webhook      *webhookmodule.Module
 	Budget       *budgetmodule.Module
+	Categories   *categoriesmodule.Module
 }
 
 func New(deps Dependencies) *Handler {
@@ -65,5 +68,6 @@ func New(deps Dependencies) *Handler {
 		Admin:        deps.Admin,
 		Webhook:      deps.Webhook,
 		Budget:       deps.Budget,
+		Categories:   deps.Categories,
 	}
 }

@@ -41,14 +41,13 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 	}
 	now := time.Now().UTC()
 	b := &model.Budget{
-		ID:            ids.New("bgt"),
-		UserID:        userID,
-		Kategori:      input.Kategori,
-		KategoriLabel: kategoriLabel(input.Kategori),
-		Limit:         input.Limit,
-		Month:         month,
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		ID:        ids.New("bgt"),
+		UserID:    userID,
+		Kategori:  input.Kategori,
+		Limit:     input.Limit,
+		Month:     month,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 	if err := s.repository.Create(ctx, b); err != nil {
 		return nil, err
@@ -91,17 +90,3 @@ func normalizeMonth(month string) string {
 	return month
 }
 
-func kategoriLabel(kategori string) string {
-	labels := map[string]string{
-		"Makan":      "Makanan & Minuman",
-		"Transport":  "Transportasi",
-		"Tagihan":    "Tagihan & Utilitas",
-		"Belanja":    "Belanja",
-		"Pemasukan":  "Pemasukan",
-		"Lainnya":    "Lainnya",
-	}
-	if label, ok := labels[kategori]; ok {
-		return label
-	}
-	return kategori
-}

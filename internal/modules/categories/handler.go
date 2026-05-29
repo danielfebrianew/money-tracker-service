@@ -1,4 +1,4 @@
-package accounts
+package categories
 
 import (
 	"net/http"
@@ -18,12 +18,12 @@ func NewHandler(service *Service) *Handler {
 }
 
 // List godoc
-// @Summary      Daftar akun finansial
-// @Tags         Accounts
+// @Summary      Daftar kategori user
+// @Tags         Categories
 // @Security     BearerAuth
 // @Produce      json
 // @Success      200 {object} response.Response
-// @Router       /accounts [get]
+// @Router       /categories [get]
 func (h *Handler) List(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -36,99 +36,70 @@ func (h *Handler) List(c echo.Context) error {
 	return response.Success(c, items)
 }
 
-// Get godoc
-// @Summary      Detail akun finansial
-// @Tags         Accounts
-// @Security     BearerAuth
-// @Produce      json
-// @Param        id path string true "Account ID"
-// @Success      200 {object} response.Response
-// @Failure      404 {object} response.Response
-// @Router       /accounts/{id} [get]
-func (h *Handler) Get(c echo.Context) error {
-	userID, err := httphelper.RequireUserID(c)
-	if err != nil {
-		return httphelper.RespondError(c, err)
-	}
-	account, err := h.service.Get(c.Request().Context(), c.Param("id"), userID)
-	if err != nil {
-		return httphelper.RespondError(c, err)
-	}
-	return response.Success(c, account)
-}
-
 // Create godoc
-// @Summary      Buat akun finansial baru
-// @Tags         Accounts
+// @Summary      Buat kategori baru
+// @Tags         Categories
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        body body CreateRequest true "Data akun"
+// @Param        body body CreateInput true "Data kategori"
 // @Success      201 {object} response.Response
 // @Failure      400 {object} response.Response
-// @Router       /accounts [post]
+// @Failure      409 {object} response.Response
+// @Router       /categories [post]
 func (h *Handler) Create(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	var req CreateRequest
+	var req CreateInput
 	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
-	account, err := h.service.Create(c.Request().Context(), userID, CreateInput{
-		Name:    req.Name,
-		Type:    req.Type,
-		Balance: req.Balance,
-		Icon:    req.Icon,
-		Color:   req.Color,
-	})
+	cat, err := h.service.Create(c.Request().Context(), userID, req)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Created(c, account)
+	return response.Message(c, http.StatusCreated, "Kategori berhasil dibuat.", cat)
 }
 
 // Update godoc
-// @Summary      Update akun finansial
-// @Tags         Accounts
+// @Summary      Update kategori
+// @Tags         Categories
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        id   path string        true "Account ID"
-// @Param        body body UpdateRequest true "Data yang diupdate"
+// @Param        id   path string      true "Category ID"
+// @Param        body body UpdateInput true "Data yang diupdate"
 // @Success      200 {object} response.Response
 // @Failure      404 {object} response.Response
-// @Router       /accounts/{id} [patch]
+// @Router       /categories/{id} [put]
 func (h *Handler) Update(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	var req UpdateRequest
+	var req UpdateInput
 	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
-	account, err := h.service.Update(c.Request().Context(), c.Param("id"), userID, UpdateInput{
-		Name:  req.Name,
-		Icon:  req.Icon,
-		Color: req.Color,
-	})
+	cat, err := h.service.Update(c.Request().Context(), c.Param("id"), userID, req)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Success(c, account)
+	return response.Message(c, http.StatusOK, "Kategori berhasil diperbarui.", cat)
 }
 
 // Delete godoc
-// @Summary      Hapus akun finansial
-// @Tags         Accounts
+// @Summary      Hapus kategori
+// @Tags         Categories
 // @Security     BearerAuth
 // @Produce      json
-// @Param        id path string true "Account ID"
+// @Param        id path string true "Category ID"
 // @Success      200 {object} response.Response
 // @Failure      404 {object} response.Response
-// @Router       /accounts/{id} [delete]
+// @Failure      409 {object} response.Response
+// @Router       /categories/{id} [delete]
 func (h *Handler) Delete(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -137,5 +108,5 @@ func (h *Handler) Delete(c echo.Context) error {
 	if err := h.service.Delete(c.Request().Context(), c.Param("id"), userID); err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Message(c, http.StatusOK, "Akun berhasil dihapus", nil)
+	return response.Message(c, http.StatusOK, "Kategori berhasil dihapus.", nil)
 }

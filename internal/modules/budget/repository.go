@@ -22,16 +22,18 @@ func NewRepository(db *sqlx.DB) *Repository {
 func (r *Repository) List(ctx context.Context, userID, month string) ([]model.BudgetWithSpent, error) {
 	var items []model.BudgetWithSpent
 	err := r.db.SelectContext(ctx, &items, `
-		SELECT b.id, b.user_id, b.kategori, b.kategori_label, b.limit, b.month, b.created_at, b.updated_at,
+		SELECT b.id, b.user_id, b.kategori, b.limit, b.month, b.created_at, b.updated_at,
+		       COALESCE(c.label, b.kategori) AS kategori_label,
 		       COALESCE(SUM(t.jumlah), 0) AS spent
 		FROM budgets b
+		LEFT JOIN categories c ON c.user_id = b.user_id AND c.name = b.kategori
 		LEFT JOIN transactions t
 		       ON t.user_id = b.user_id
 		      AND t.kategori = b.kategori
 		      AND t.tipe = 'OUT'
 		      AND to_char(t.created_at AT TIME ZONE 'UTC', 'YYYY-MM') = b.month
 		WHERE b.user_id = $1 AND b.month = $2
-		GROUP BY b.id
+		GROUP BY b.id, c.label
 		ORDER BY b.created_at ASC
 	`, userID, month)
 	return items, err
@@ -40,16 +42,18 @@ func (r *Repository) List(ctx context.Context, userID, month string) ([]model.Bu
 func (r *Repository) Get(ctx context.Context, id, userID string) (*model.BudgetWithSpent, error) {
 	var item model.BudgetWithSpent
 	err := r.db.GetContext(ctx, &item, `
-		SELECT b.id, b.user_id, b.kategori, b.kategori_label, b.limit, b.month, b.created_at, b.updated_at,
+		SELECT b.id, b.user_id, b.kategori, b.limit, b.month, b.created_at, b.updated_at,
+		       COALESCE(c.label, b.kategori) AS kategori_label,
 		       COALESCE(SUM(t.jumlah), 0) AS spent
 		FROM budgets b
+		LEFT JOIN categories c ON c.user_id = b.user_id AND c.name = b.kategori
 		LEFT JOIN transactions t
 		       ON t.user_id = b.user_id
 		      AND t.kategori = b.kategori
 		      AND t.tipe = 'OUT'
 		      AND to_char(t.created_at AT TIME ZONE 'UTC', 'YYYY-MM') = b.month
 		WHERE b.id = $1 AND b.user_id = $2
-		GROUP BY b.id
+		GROUP BY b.id, c.label
 	`, id, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, apperror.ErrNotFound
@@ -67,9 +71,9 @@ func (r *Repository) ExistsForMonth(ctx context.Context, userID, kategori, month
 
 func (r *Repository) Create(ctx context.Context, b *model.Budget) error {
 	_, err := r.db.ExecContext(ctx, `
-		INSERT INTO budgets (id, user_id, kategori, kategori_label, "limit", month, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`, b.ID, b.UserID, b.Kategori, b.KategoriLabel, b.Limit, b.Month, b.CreatedAt, b.UpdatedAt)
+		INSERT INTO budgets (id, user_id, kategori, "limit", month, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`, b.ID, b.UserID, b.Kategori, b.Limit, b.Month, b.CreatedAt, b.UpdatedAt)
 	return err
 }
 

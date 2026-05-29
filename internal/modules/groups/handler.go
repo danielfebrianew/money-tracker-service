@@ -16,6 +16,15 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+// Create godoc
+// @Summary      Buat grup baru
+// @Tags         Groups
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        body body CreateRequest true "Data grup"
+// @Success      201 {object} response.Response
+// @Router       /groups [post]
 func (h *Handler) Create(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -32,6 +41,13 @@ func (h *Handler) Create(c echo.Context) error {
 	return response.Created(c, map[string]interface{}{"id": group.ID, "name": group.Name, "members": members})
 }
 
+// List godoc
+// @Summary      Daftar grup user
+// @Tags         Groups
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200 {object} response.Response
+// @Router       /groups [get]
 func (h *Handler) List(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -44,6 +60,17 @@ func (h *Handler) List(c echo.Context) error {
 	return response.Success(c, groups)
 }
 
+// Invite godoc
+// @Summary      Undang anggota ke grup
+// @Tags         Groups
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id   path string        true "Group ID"
+// @Param        body body InviteRequest true "Nomor HP anggota"
+// @Success      201 {object} response.Response
+// @Failure      404 {object} response.Response
+// @Router       /groups/{id}/invite [post]
 func (h *Handler) Invite(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -60,6 +87,16 @@ func (h *Handler) Invite(c echo.Context) error {
 	return response.Created(c, member)
 }
 
+// CreateTransaction godoc
+// @Summary      Buat transaksi dalam grup
+// @Tags         Groups
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id   path string           true "Group ID"
+// @Param        body body TransactionRequest true "Data transaksi"
+// @Success      201 {object} response.Response
+// @Router       /groups/{id}/transactions [post]
 func (h *Handler) CreateTransaction(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -82,6 +119,15 @@ func (h *Handler) CreateTransaction(c echo.Context) error {
 	return response.Created(c, tx)
 }
 
+// Report godoc
+// @Summary      Laporan keuangan grup
+// @Tags         Groups
+// @Security     BearerAuth
+// @Produce      json
+// @Param        id    path  string true  "Group ID"
+// @Param        month query string false "Bulan (YYYY-MM)"
+// @Success      200 {object} response.Response
+// @Router       /groups/{id}/report [get]
 func (h *Handler) Report(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {

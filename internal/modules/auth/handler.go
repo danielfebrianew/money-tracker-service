@@ -22,6 +22,16 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+// Register godoc
+// @Summary      Daftar akun baru
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        body body RegisterRequest true "Data registrasi"
+// @Success      201 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Failure      409 {object} response.Response
+// @Router       /auth/register [post]
 func (h *Handler) Register(c echo.Context) error {
 	var req RegisterRequest
 	if err := httphelper.Bind(c, &req); err != nil {
@@ -42,6 +52,15 @@ func (h *Handler) Register(c echo.Context) error {
 	})
 }
 
+// Login godoc
+// @Summary      Login user
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        body body LoginRequest true "Kredensial login"
+// @Success      200 {object} response.Response
+// @Failure      401 {object} response.Response
+// @Router       /auth/login [post]
 func (h *Handler) Login(c echo.Context) error {
 	var req LoginRequest
 	if err := httphelper.Bind(c, &req); err != nil {
@@ -59,6 +78,15 @@ func (h *Handler) Login(c echo.Context) error {
 	})
 }
 
+// Refresh godoc
+// @Summary      Refresh access token
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        body body RefreshRequest false "Refresh token (opsional jika pakai cookie)"
+// @Success      200 {object} response.Response
+// @Failure      401 {object} response.Response
+// @Router       /auth/refresh [post]
 func (h *Handler) Refresh(c echo.Context) error {
 	refreshToken := refreshTokenFromRequest(c, cookie.UserRefreshCookie)
 	if refreshToken == "" {
@@ -76,6 +104,13 @@ func (h *Handler) Refresh(c echo.Context) error {
 	})
 }
 
+// Logout godoc
+// @Summary      Logout user
+// @Tags         Auth
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200 {object} response.Response
+// @Router       /auth/logout [post]
 func (h *Handler) Logout(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -88,6 +123,16 @@ func (h *Handler) Logout(c echo.Context) error {
 	return response.Message(c, http.StatusOK, "Berhasil logout", nil)
 }
 
+// ChangePassword godoc
+// @Summary      Ganti password
+// @Tags         Auth
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        body body ChangePasswordRequest true "Password lama dan baru"
+// @Success      200 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Router       /auth/change-password [put]
 func (h *Handler) ChangePassword(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {

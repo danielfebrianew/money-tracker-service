@@ -17,6 +17,13 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
+// Get godoc
+// @Summary      Cek saldo token user
+// @Tags         Balance
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200 {object} response.Response
+// @Router       /balance [get]
 func (h *Handler) Get(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {

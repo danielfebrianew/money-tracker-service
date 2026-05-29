@@ -18,14 +18,23 @@ import (
 	"money-tracker-service/internal/pkg/ids"
 )
 
+type CategorySeeder interface {
+	SeedDefaults(ctx context.Context, userID string) error
+}
+
 type Service struct {
-	cfg        config.Config
-	repository *Repository
-	cache      *cache.Cache
+	cfg             config.Config
+	repository      *Repository
+	cache           *cache.Cache
+	categorySeeder  CategorySeeder
 }
 
 func NewService(cfg config.Config, repository *Repository, cache *cache.Cache) *Service {
 	return &Service{cfg: cfg, repository: repository, cache: cache}
+}
+
+func (s *Service) SetCategorySeeder(seeder CategorySeeder) {
+	s.categorySeeder = seeder
 }
 
 func (s *Service) Register(ctx context.Context, phone, name string, email *string, password string, referralCode *string) (cookie.TokenPair, error) {
@@ -48,6 +57,9 @@ func (s *Service) Register(ctx context.Context, phone, name string, email *strin
 	}
 	if err := s.repository.CreateUserWithBalance(ctx, user, referralCode); err != nil {
 		return cookie.TokenPair{}, err
+	}
+	if s.categorySeeder != nil {
+		_ = s.categorySeeder.SeedDefaults(ctx, user.ID)
 	}
 	pair, err := s.NewUserTokenPair(ctx, user.ID, "user")
 	if err != nil {
