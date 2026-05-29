@@ -14,8 +14,7 @@ type Budget struct {
 
 type BudgetWithSpent struct {
 	Budget
-	KategoriLabel string `json:"kategori_label" db:"kategori_label"`
-	Spent         int    `json:"spent" db:"spent"`
+	Spent int `json:"spent" db:"spent"`
 }
 
 type BudgetHistory struct {

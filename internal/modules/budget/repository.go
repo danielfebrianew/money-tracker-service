@@ -23,17 +23,15 @@ func (r *Repository) List(ctx context.Context, userID, month string) ([]model.Bu
 	var items []model.BudgetWithSpent
 	err := r.db.SelectContext(ctx, &items, `
 		SELECT b.id, b.user_id, b.kategori, b.limit, b.month, b.created_at, b.updated_at,
-		       COALESCE(c.label, b.kategori) AS kategori_label,
 		       COALESCE(SUM(t.jumlah), 0) AS spent
 		FROM budgets b
-		LEFT JOIN categories c ON c.user_id = b.user_id AND c.name = b.kategori
 		LEFT JOIN transactions t
 		       ON t.user_id = b.user_id
 		      AND t.kategori = b.kategori
 		      AND t.tipe = 'OUT'
 		      AND to_char(t.created_at AT TIME ZONE 'UTC', 'YYYY-MM') = b.month
 		WHERE b.user_id = $1 AND b.month = $2
-		GROUP BY b.id, c.label
+		GROUP BY b.id
 		ORDER BY b.created_at ASC
 	`, userID, month)
 	return items, err
@@ -43,17 +41,15 @@ func (r *Repository) Get(ctx context.Context, id, userID string) (*model.BudgetW
 	var item model.BudgetWithSpent
 	err := r.db.GetContext(ctx, &item, `
 		SELECT b.id, b.user_id, b.kategori, b.limit, b.month, b.created_at, b.updated_at,
-		       COALESCE(c.label, b.kategori) AS kategori_label,
 		       COALESCE(SUM(t.jumlah), 0) AS spent
 		FROM budgets b
-		LEFT JOIN categories c ON c.user_id = b.user_id AND c.name = b.kategori
 		LEFT JOIN transactions t
 		       ON t.user_id = b.user_id
 		      AND t.kategori = b.kategori
 		      AND t.tipe = 'OUT'
 		      AND to_char(t.created_at AT TIME ZONE 'UTC', 'YYYY-MM') = b.month
 		WHERE b.id = $1 AND b.user_id = $2
-		GROUP BY b.id, c.label
+		GROUP BY b.id
 	`, id, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, apperror.ErrNotFound
