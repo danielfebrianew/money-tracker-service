@@ -47,14 +47,12 @@ func (h *Handler) Login(c echo.Context) error {
 	if err := bind(c, &req); err != nil {
 		return err
 	}
-	user, balance, pair, err := h.service.Login(c.Request().Context(), req.Identifier, req.Password)
+	_, _, pair, err := h.service.Login(c.Request().Context(), req.Identifier, req.Password)
 	if err != nil {
 		return respondError(c, err)
 	}
 	setAuthCookies(c, pair, AudienceUser)
 	return response.Success(c, map[string]interface{}{
-		"user":          user,
-		"balance":       balance,
 		"access_token":  pair.AccessToken,
 		"refresh_token": pair.RefreshToken,
 		"expires_in":    pair.ExpiresIn,
