@@ -26,5 +26,4 @@ func NewModule(cfg config.Config, db *sqlx.DB) *Module {
 
 func (m *Module) RegisterUserRoutes(api *echo.Group, generateMiddlewares ...echo.MiddlewareFunc) {
 	api.GET("/referral", m.Handler.Summary)
-	api.POST("/referral/generate", m.Handler.Generate, generateMiddlewares...)
 }

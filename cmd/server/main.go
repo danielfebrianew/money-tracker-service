@@ -94,6 +94,7 @@ func main() {
 	categoryModule := categoriesmodule.NewModule(db)
 
 	authModule.Service.SetCategorySeeder(categoryModule.Service)
+	authModule.Service.SetReferralCreator(referralModule.Service)
 	transactionModule.Service.SetCategoryValidator(categoryModule.Service)
 
 	if err := authService.SeedAdmin(ctx); err != nil {

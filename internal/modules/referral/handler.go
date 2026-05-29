@@ -34,21 +34,3 @@ func (h *Handler) Summary(c echo.Context) error {
 	return response.Success(c, data)
 }
 
-// Generate godoc
-// @Summary      Generate kode referral baru
-// @Tags         Referral
-// @Security     BearerAuth
-// @Produce      json
-// @Success      201 {object} response.Response
-// @Router       /referral/generate [post]
-func (h *Handler) Generate(c echo.Context) error {
-	userID, err := httphelper.RequireUserID(c)
-	if err != nil {
-		return httphelper.RespondError(c, err)
-	}
-	data, err := h.service.Generate(c.Request().Context(), userID)
-	if err != nil {
-		return httphelper.RespondError(c, err)
-	}
-	return response.Created(c, data)
-}

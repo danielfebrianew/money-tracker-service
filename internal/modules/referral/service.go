@@ -46,14 +46,13 @@ func (s *Service) Summary(ctx context.Context, userID string) (map[string]interf
 	}, nil
 }
 
-func (s *Service) Generate(ctx context.Context, userID string) (map[string]interface{}, error) {
-	existing, err := s.repository.GetCodeByUser(ctx, userID)
-	if err == nil {
-		return referralResponse(s.cfg.AppURL, existing.Code), nil
+func (s *Service) CreateForUser(ctx context.Context, userID string) error {
+	if _, err := s.repository.GetCodeByUser(ctx, userID); err == nil {
+		return nil
 	}
 	user, err := s.repository.GetUserByID(ctx, userID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	prefix := "USR"
 	name := strings.ToUpper(strings.TrimSpace(user.Name))
@@ -80,10 +79,7 @@ func (s *Service) Generate(ctx context.Context, userID string) (map[string]inter
 		IsActive:   true,
 		CreatedAt:  time.Now().UTC(),
 	}
-	if err := s.repository.CreateCode(ctx, code); err != nil {
-		return nil, err
-	}
-	return referralResponse(s.cfg.AppURL, code.Code), nil
+	return s.repository.CreateCode(ctx, code)
 }
 
 func referralResponse(appURL, code string) map[string]interface{} {

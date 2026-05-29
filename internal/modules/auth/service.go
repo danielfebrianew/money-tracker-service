@@ -22,11 +22,16 @@ type CategorySeeder interface {
 	SeedDefaults(ctx context.Context, userID string) error
 }
 
+type ReferralCreator interface {
+	CreateForUser(ctx context.Context, userID string) error
+}
+
 type Service struct {
 	cfg             config.Config
 	repository      *Repository
 	cache           *cache.Cache
 	categorySeeder  CategorySeeder
+	referralCreator ReferralCreator
 }
 
 func NewService(cfg config.Config, repository *Repository, cache *cache.Cache) *Service {
@@ -35,6 +40,10 @@ func NewService(cfg config.Config, repository *Repository, cache *cache.Cache) *
 
 func (s *Service) SetCategorySeeder(seeder CategorySeeder) {
 	s.categorySeeder = seeder
+}
+
+func (s *Service) SetReferralCreator(creator ReferralCreator) {
+	s.referralCreator = creator
 }
 
 func (s *Service) Register(ctx context.Context, phone, name string, email *string, password string, referralCode *string) (cookie.TokenPair, error) {
@@ -60,6 +69,9 @@ func (s *Service) Register(ctx context.Context, phone, name string, email *strin
 	}
 	if s.categorySeeder != nil {
 		_ = s.categorySeeder.SeedDefaults(ctx, user.ID)
+	}
+	if s.referralCreator != nil {
+		_ = s.referralCreator.CreateForUser(ctx, user.ID)
 	}
 	pair, err := s.NewUserTokenPair(ctx, user.ID, "user")
 	if err != nil {
