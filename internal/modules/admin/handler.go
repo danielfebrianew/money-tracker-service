@@ -8,6 +8,7 @@ import (
 
 	authmodule "money-management-service/internal/modules/auth"
 	paymentsmodule "money-management-service/internal/modules/payments"
+	"money-management-service/internal/pkg/cookie"
 	"money-management-service/internal/pkg/httphelper"
 	"money-management-service/pkg/response"
 )
@@ -31,12 +32,12 @@ func (h *Handler) Login(c echo.Context) error {
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	authmodule.SetAuthCookies(c, pair, authmodule.AudienceAdmin)
+	cookie.SetAuthCookies(c, pair, cookie.AudienceAdmin)
 	return response.Success(c, map[string]interface{}{"admin": admin, "access_token": pair.AccessToken, "refresh_token": pair.RefreshToken, "expires_in": pair.ExpiresIn})
 }
 
 func (h *Handler) Refresh(c echo.Context) error {
-	refreshToken := authmodule.RefreshTokenFromRequest(c, authmodule.AdminRefreshCookie)
+	refreshToken := cookie.RefreshTokenFromRequest(c, cookie.AdminRefreshCookie)
 	if refreshToken == "" {
 		return response.Error(c, http.StatusUnauthorized, "Refresh token tidak ditemukan")
 	}
@@ -44,7 +45,7 @@ func (h *Handler) Refresh(c echo.Context) error {
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	authmodule.SetAuthCookies(c, pair, authmodule.AudienceAdmin)
+	cookie.SetAuthCookies(c, pair, cookie.AudienceAdmin)
 	return response.Success(c, map[string]interface{}{
 		"access_token":  pair.AccessToken,
 		"refresh_token": pair.RefreshToken,
@@ -53,9 +54,9 @@ func (h *Handler) Refresh(c echo.Context) error {
 }
 
 func (h *Handler) Logout(c echo.Context) error {
-	refreshToken := authmodule.RefreshTokenFromRequest(c, authmodule.AdminRefreshCookie)
+	refreshToken := cookie.RefreshTokenFromRequest(c, cookie.AdminRefreshCookie)
 	_ = h.auth.AdminLogout(c.Request().Context(), refreshToken)
-	authmodule.ClearAuthCookies(c, authmodule.AudienceAdmin)
+	cookie.ClearAuthCookies(c, cookie.AudienceAdmin)
 	return response.Message(c, http.StatusOK, "Berhasil logout", nil)
 }
 

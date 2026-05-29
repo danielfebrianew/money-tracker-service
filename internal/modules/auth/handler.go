@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"money-management-service/internal/pkg/cookie"
 	"money-management-service/internal/pkg/httphelper"
 	"money-management-service/pkg/response"
 )
@@ -33,7 +34,7 @@ func (h *Handler) Register(c echo.Context) error {
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	setAuthCookies(c, pair, AudienceUser)
+	cookie.SetAuthCookies(c, pair, cookie.AudienceUser)
 	return response.Created(c, map[string]interface{}{
 		"access_token":  pair.AccessToken,
 		"refresh_token": pair.RefreshToken,
@@ -50,7 +51,7 @@ func (h *Handler) Login(c echo.Context) error {
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	setAuthCookies(c, pair, AudienceUser)
+	cookie.SetAuthCookies(c, pair, cookie.AudienceUser)
 	return response.Success(c, map[string]interface{}{
 		"access_token":  pair.AccessToken,
 		"refresh_token": pair.RefreshToken,
@@ -59,7 +60,7 @@ func (h *Handler) Login(c echo.Context) error {
 }
 
 func (h *Handler) Refresh(c echo.Context) error {
-	refreshToken := refreshTokenFromRequest(c, UserRefreshCookie)
+	refreshToken := refreshTokenFromRequest(c, cookie.UserRefreshCookie)
 	if refreshToken == "" {
 		return response.Error(c, http.StatusUnauthorized, "Refresh token tidak ditemukan")
 	}
@@ -67,7 +68,7 @@ func (h *Handler) Refresh(c echo.Context) error {
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	setAuthCookies(c, pair, AudienceUser)
+	cookie.SetAuthCookies(c, pair, cookie.AudienceUser)
 	return response.Success(c, map[string]interface{}{
 		"access_token":  pair.AccessToken,
 		"refresh_token": pair.RefreshToken,
@@ -80,10 +81,10 @@ func (h *Handler) Logout(c echo.Context) error {
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	if err := h.service.Logout(c.Request().Context(), userID, refreshTokenFromRequest(c, UserRefreshCookie)); err != nil {
+	if err := h.service.Logout(c.Request().Context(), userID, refreshTokenFromRequest(c, cookie.UserRefreshCookie)); err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	clearAuthCookies(c, AudienceUser)
+	cookie.ClearAuthCookies(c, cookie.AudienceUser)
 	return response.Message(c, http.StatusOK, "Berhasil logout", nil)
 }
 

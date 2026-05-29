@@ -8,20 +8,21 @@ import (
 
 	authmodule "money-management-service/internal/modules/auth"
 	"money-management-service/internal/pkg/apperror"
+	"money-management-service/internal/pkg/cookie"
 	"money-management-service/pkg/response"
 )
 
 // UserJWT authenticates a user request. It reads the access token from the
 // `user_access_token` cookie, falling back to the Authorization Bearer header.
 func UserJWT(auth *authmodule.Service) echo.MiddlewareFunc {
-	return jwtMiddleware(auth, authmodule.UserAccessCookie, nil)
+	return jwtMiddleware(auth, cookie.UserAccessCookie, nil)
 }
 
 // AdminJWT authenticates an admin request. It reads the access token from the
 // `admin_access_token` cookie, falling back to the Authorization Bearer header,
 // and rejects any role outside admin/superadmin.
 func AdminJWT(auth *authmodule.Service) echo.MiddlewareFunc {
-	return jwtMiddleware(auth, authmodule.AdminAccessCookie, []string{"admin", "superadmin"})
+	return jwtMiddleware(auth, cookie.AdminAccessCookie, []string{"admin", "superadmin"})
 }
 
 func jwtMiddleware(auth *authmodule.Service, cookieName string, allowedRoles []string) echo.MiddlewareFunc {

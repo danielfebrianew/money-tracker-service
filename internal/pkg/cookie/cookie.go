@@ -1,20 +1,11 @@
-package auth
+package cookie
 
 import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-
-	"money-management-service/internal/pkg/httphelper"
 )
 
-func bind(c echo.Context, dest interface{}) error  { return httphelper.Bind(c, dest) }
-func requireUserID(c echo.Context) (string, error) { return httphelper.RequireUserID(c) }
-func respondError(c echo.Context, err error) error { return httphelper.RespondError(c, err) }
-
-// Audience constants for cookie scoping. User and admin sessions live under
-// separate cookie names so they can coexist on the same client without one
-// overriding the other.
 const (
 	AudienceUser  = "user"
 	AudienceAdmin = "admin"
@@ -28,36 +19,27 @@ const (
 	AdminRefreshPath = "/api/admin/auth/refresh"
 )
 
+type TokenPair struct {
+	AccessToken  string
+	RefreshToken string
+	ExpiresIn    int64
+}
+
 type cookieNames struct {
 	access      string
 	refresh     string
 	refreshPath string
 }
 
-func cookiesFor(audience string) cookieNames {
+func namesFor(audience string) cookieNames {
 	if audience == AudienceAdmin {
 		return cookieNames{access: AdminAccessCookie, refresh: AdminRefreshCookie, refreshPath: AdminRefreshPath}
 	}
 	return cookieNames{access: UserAccessCookie, refresh: UserRefreshCookie, refreshPath: UserRefreshPath}
 }
 
-// SetAuthCookies is the exported variant for callers in other modules (e.g. admin).
 func SetAuthCookies(c echo.Context, pair TokenPair, audience string) {
-	setAuthCookies(c, pair, audience)
-}
-
-// ClearAuthCookies is the exported variant for callers in other modules.
-func ClearAuthCookies(c echo.Context, audience string) {
-	clearAuthCookies(c, audience)
-}
-
-// RefreshTokenFromRequest exposes the cookie/body lookup helper to other modules.
-func RefreshTokenFromRequest(c echo.Context, cookieName string) string {
-	return refreshTokenFromRequest(c, cookieName)
-}
-
-func setAuthCookies(c echo.Context, pair TokenPair, audience string) {
-	names := cookiesFor(audience)
+	names := namesFor(audience)
 	secure := isSecure(c)
 	c.SetCookie(&http.Cookie{
 		Name:     names.access,
@@ -79,8 +61,8 @@ func setAuthCookies(c echo.Context, pair TokenPair, audience string) {
 	})
 }
 
-func clearAuthCookies(c echo.Context, audience string) {
-	names := cookiesFor(audience)
+func ClearAuthCookies(c echo.Context, audience string) {
+	names := namesFor(audience)
 	secure := isSecure(c)
 	c.SetCookie(&http.Cookie{
 		Name:     names.access,
@@ -100,6 +82,13 @@ func clearAuthCookies(c echo.Context, audience string) {
 		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 	})
+}
+
+func RefreshTokenFromRequest(c echo.Context, cookieName string) string {
+	if ck, err := c.Cookie(cookieName); err == nil && ck.Value != "" {
+		return ck.Value
+	}
+	return ""
 }
 
 func isSecure(c echo.Context) bool {
