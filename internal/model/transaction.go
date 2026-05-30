@@ -6,7 +6,7 @@ type Transaction struct {
 	ID         string    `json:"id" db:"id"`
 	UserID     string    `json:"user_id" db:"user_id"`
 	GroupID    *string   `json:"group_id,omitempty" db:"group_id"`
-	AccountID  *string   `json:"account_id,omitempty" db:"account_id"`
+	WalletID  *string   `json:"wallet_id,omitempty" db:"wallet_id"`
 	Jumlah     int       `json:"jumlah" db:"jumlah"`
 	Deskripsi  string    `json:"deskripsi" db:"deskripsi"`
 	Kategori   string    `json:"kategori" db:"kategori"`
@@ -19,7 +19,7 @@ type Transaction struct {
 
 type TransactionResponse struct {
 	Transaction
-	AccountName *string `json:"account_name,omitempty" db:"account_name"`
+	WalletName *string `json:"wallet_name,omitempty" db:"wallet_name"`
 }
 
 type ParsedTransaction struct {
@@ -38,7 +38,7 @@ type TransactionFilters struct {
 	PerPage   int
 	Tipe      string
 	Kategori  string
-	AccountID *string
+	WalletID *string
 	From      *time.Time
 	To        *time.Time
 	Search    string
@@ -47,7 +47,7 @@ type TransactionFilters struct {
 type TransactionListParams struct {
 	UserID    string
 	GroupID   *string
-	AccountID *string
+	WalletID *string
 	Tipe      *string
 	Kategori  *string
 	From      *time.Time
@@ -63,7 +63,7 @@ type CreateTransactionInput struct {
 	Kategori  string  `json:"kategori"`
 	Tipe      string  `json:"tipe"`
 	Source    string  `json:"source"`
-	AccountID *string `json:"account_id"`
+	WalletID *string `json:"wallet_id"`
 }
 
 type CategoryTotal struct {

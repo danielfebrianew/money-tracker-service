@@ -17,9 +17,9 @@ type Parser interface {
 	ParseMessage(ctx context.Context, message string) (*model.ParsedTransaction, error)
 }
 
-type AccountUpdater interface {
-	UpdateBalance(ctx context.Context, tx *sqlx.Tx, accountID string, delta int) error
-	Get(ctx context.Context, id, userID string) (*model.Account, error)
+type WalletUpdater interface {
+	UpdateBalance(ctx context.Context, tx *sqlx.Tx, walletID string, delta int) error
+	Get(ctx context.Context, id, userID string) (*model.Wallet, error)
 }
 
 type CategoryValidator interface {
@@ -30,11 +30,11 @@ type Service struct {
 	repository        *Repository
 	cache             *cache.Cache
 	parser            Parser
-	accountUpdater    AccountUpdater
+	accountUpdater    WalletUpdater
 	categoryValidator CategoryValidator
 }
 
-func NewService(repository *Repository, cache *cache.Cache, parser Parser, accountUpdater AccountUpdater) *Service {
+func NewService(repository *Repository, cache *cache.Cache, parser Parser, accountUpdater WalletUpdater) *Service {
 	return &Service{repository: repository, cache: cache, parser: parser, accountUpdater: accountUpdater}
 }
 
@@ -54,9 +54,9 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 	if err != nil {
 		return nil, err
 	}
-	if input.AccountID != nil && s.accountUpdater != nil {
-		if _, err := s.accountUpdater.Get(ctx, *input.AccountID, userID); err != nil {
-			return nil, apperror.New(apperror.ErrNotFound, "Akun tidak ditemukan")
+	if input.WalletID != nil && s.accountUpdater != nil {
+		if _, err := s.accountUpdater.Get(ctx, *input.WalletID, userID); err != nil {
+			return nil, apperror.New(apperror.ErrNotFound, "Wallet tidak ditemukan")
 		}
 		dbTx, err := s.repository.BeginTx(ctx)
 		if err != nil {
@@ -67,7 +67,7 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 			return nil, err
 		}
 		delta := balanceDelta(tx.Tipe, tx.Jumlah)
-		if err := s.accountUpdater.UpdateBalance(ctx, dbTx, *input.AccountID, delta); err != nil {
+		if err := s.accountUpdater.UpdateBalance(ctx, dbTx, *input.WalletID, delta); err != nil {
 			return nil, err
 		}
 		if err := dbTx.Commit(); err != nil {
@@ -173,7 +173,7 @@ func (s *Service) Delete(ctx context.Context, userID, txID string) error {
 		if err != nil {
 			return err
 		}
-		if fetched.AccountID != nil {
+		if fetched.WalletID != nil {
 			dbTx, err := s.repository.BeginTx(ctx)
 			if err != nil {
 				return err
@@ -183,7 +183,7 @@ func (s *Service) Delete(ctx context.Context, userID, txID string) error {
 				return err
 			}
 			delta := balanceDelta(fetched.Tipe, fetched.Jumlah) * -1
-			if err := s.accountUpdater.UpdateBalance(ctx, dbTx, *fetched.AccountID, delta); err != nil {
+			if err := s.accountUpdater.UpdateBalance(ctx, dbTx, *fetched.WalletID, delta); err != nil {
 				return err
 			}
 			if err := dbTx.Commit(); err != nil {

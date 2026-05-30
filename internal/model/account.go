@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-type Account struct {
+type Wallet struct {
 	ID        string    `json:"id" db:"id"`
 	UserID    string    `json:"user_id" db:"user_id"`
 	Name      string    `json:"name" db:"name"`
@@ -14,7 +14,7 @@ type Account struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
-type CreateAccountInput struct {
+type CreateWalletInput struct {
 	Name    string
 	Type    string
 	Balance int
@@ -22,7 +22,7 @@ type CreateAccountInput struct {
 	Color   string
 }
 
-type UpdateAccountInput struct {
+type UpdateWalletInput struct {
 	Name  *string
 	Icon  *string
 	Color *string

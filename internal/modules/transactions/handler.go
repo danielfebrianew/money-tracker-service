@@ -129,7 +129,7 @@ func (h *Handler) create(c echo.Context, source string) error {
 		Kategori:  req.Kategori,
 		Tipe:      req.Tipe,
 		Source:    source,
-		AccountID: req.AccountID,
+		WalletID: req.WalletID,
 	})
 	if err != nil {
 		return httphelper.RespondError(c, err)
@@ -150,8 +150,8 @@ func transactionFilters(c echo.Context) (model.TransactionFilters, error) {
 		Kategori: c.QueryParam("kategori"),
 		Search:   c.QueryParam("search"),
 	}
-	if aid := c.QueryParam("account_id"); aid != "" {
-		filters.AccountID = &aid
+	if aid := c.QueryParam("wallet_id"); aid != "" {
+		filters.WalletID = &aid
 	}
 	if filters.Tipe != "" && !validTipe(filters.Tipe) {
 		return filters, apperror.New(apperror.ErrValidation, "Tipe harus IN, OUT, atau TRANSFER")

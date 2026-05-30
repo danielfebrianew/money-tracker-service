@@ -1,4 +1,4 @@
-package accounts
+package wallets
 
 import (
 	"net/http"
@@ -50,11 +50,11 @@ func (h *Handler) Get(c echo.Context) error {
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	account, err := h.service.Get(c.Request().Context(), c.Param("id"), userID)
+	wallet, err := h.service.Get(c.Request().Context(), c.Param("id"), userID)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Success(c, account)
+	return response.Success(c, wallet)
 }
 
 // Create godoc
@@ -76,7 +76,7 @@ func (h *Handler) Create(c echo.Context) error {
 	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
-	account, err := h.service.Create(c.Request().Context(), userID, CreateInput{
+	wallet, err := h.service.Create(c.Request().Context(), userID, CreateInput{
 		Name:    req.Name,
 		Type:    req.Type,
 		Balance: req.Balance,
@@ -86,7 +86,7 @@ func (h *Handler) Create(c echo.Context) error {
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Created(c, account)
+	return response.Created(c, wallet)
 }
 
 // Update godoc
@@ -109,7 +109,7 @@ func (h *Handler) Update(c echo.Context) error {
 	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
-	account, err := h.service.Update(c.Request().Context(), c.Param("id"), userID, UpdateInput{
+	wallet, err := h.service.Update(c.Request().Context(), c.Param("id"), userID, UpdateInput{
 		Name:  req.Name,
 		Icon:  req.Icon,
 		Color: req.Color,
@@ -117,7 +117,7 @@ func (h *Handler) Update(c echo.Context) error {
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Success(c, account)
+	return response.Success(c, wallet)
 }
 
 // Delete godoc
@@ -137,5 +137,5 @@ func (h *Handler) Delete(c echo.Context) error {
 	if err := h.service.Delete(c.Request().Context(), c.Param("id"), userID); err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Message(c, http.StatusOK, "Akun berhasil dihapus", nil)
+	return response.Message(c, http.StatusOK, "Wallet berhasil dihapus", nil)
 }

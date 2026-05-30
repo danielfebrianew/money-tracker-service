@@ -1,4 +1,4 @@
-package accounts
+package wallets
 
 import "money-tracker-service/internal/model"
 
@@ -16,5 +16,5 @@ type UpdateRequest struct {
 	Color *string `json:"color"`
 }
 
-type CreateInput = model.CreateAccountInput
-type UpdateInput = model.UpdateAccountInput
+type CreateInput = model.CreateWalletInput
+type UpdateInput = model.UpdateWalletInput

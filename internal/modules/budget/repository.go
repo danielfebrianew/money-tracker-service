@@ -60,7 +60,7 @@ func (r *Repository) Get(ctx context.Context, id, userID string) (*model.BudgetW
 func (r *Repository) GetTransactions(ctx context.Context, userID, kategori, month string) ([]model.Transaction, error) {
 	var items []model.Transaction
 	err := r.db.SelectContext(ctx, &items, `
-		SELECT id, user_id, group_id, account_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at
+		SELECT id, user_id, group_id, wallet_id, jumlah, deskripsi, kategori, tipe, source, recorded_by, confidence, created_at
 		FROM transactions
 		WHERE user_id = $1
 		  AND kategori = $2

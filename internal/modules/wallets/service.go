@@ -1,4 +1,4 @@
-package accounts
+package wallets
 
 import (
 	"context"
@@ -34,22 +34,22 @@ func NewService(repository *Repository) *Service {
 	return &Service{repository: repository}
 }
 
-func (s *Service) List(ctx context.Context, userID string) ([]model.Account, error) {
+func (s *Service) List(ctx context.Context, userID string) ([]model.Wallet, error) {
 	return s.repository.List(ctx, userID)
 }
 
-func (s *Service) Get(ctx context.Context, id, userID string) (*model.Account, error) {
+func (s *Service) Get(ctx context.Context, id, userID string) (*model.Wallet, error) {
 	return s.repository.Get(ctx, id, userID)
 }
 
-func (s *Service) Create(ctx context.Context, userID string, input CreateInput) (*model.Account, error) {
+func (s *Service) Create(ctx context.Context, userID string, input CreateInput) (*model.Wallet, error) {
 	name := strings.TrimSpace(input.Name)
 	typ := strings.TrimSpace(input.Type)
 	if name == "" || len(name) > 100 {
-		return nil, apperror.New(apperror.ErrValidation, "Nama akun wajib diisi dan maksimal 100 karakter")
+		return nil, apperror.New(apperror.ErrValidation, "Nama wallet wajib diisi dan maksimal 100 karakter")
 	}
 	if !validTypes[typ] {
-		return nil, apperror.New(apperror.ErrValidation, "Tipe akun harus bank, ewallet, cash, atau credit_card")
+		return nil, apperror.New(apperror.ErrValidation, "Tipe wallet harus bank, ewallet, cash, atau credit_card")
 	}
 	if input.Balance < 0 {
 		return nil, apperror.New(apperror.ErrValidation, "Saldo awal tidak boleh negatif")
@@ -63,8 +63,8 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 		color = defaultColor[typ]
 	}
 	now := time.Now()
-	account := &model.Account{
-		ID:        ids.New("acc"),
+	wallet := &model.Wallet{
+		ID:        ids.New("wlt"),
 		UserID:    userID,
 		Name:      name,
 		Type:      typ,
@@ -74,35 +74,35 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	if err := s.repository.Create(ctx, account); err != nil {
+	if err := s.repository.Create(ctx, wallet); err != nil {
 		return nil, err
 	}
-	return account, nil
+	return wallet, nil
 }
 
-func (s *Service) Update(ctx context.Context, id, userID string, input UpdateInput) (*model.Account, error) {
-	account, err := s.repository.Get(ctx, id, userID)
+func (s *Service) Update(ctx context.Context, id, userID string, input UpdateInput) (*model.Wallet, error) {
+	wallet, err := s.repository.Get(ctx, id, userID)
 	if err != nil {
 		return nil, err
 	}
 	if input.Name != nil {
 		name := strings.TrimSpace(*input.Name)
 		if name == "" || len(name) > 100 {
-			return nil, apperror.New(apperror.ErrValidation, "Nama akun wajib diisi dan maksimal 100 karakter")
+			return nil, apperror.New(apperror.ErrValidation, "Nama wallet wajib diisi dan maksimal 100 karakter")
 		}
-		account.Name = name
+		wallet.Name = name
 	}
 	if input.Icon != nil {
-		account.Icon = strings.TrimSpace(*input.Icon)
+		wallet.Icon = strings.TrimSpace(*input.Icon)
 	}
 	if input.Color != nil {
-		account.Color = strings.TrimSpace(*input.Color)
+		wallet.Color = strings.TrimSpace(*input.Color)
 	}
-	account.UpdatedAt = time.Now()
-	if err := s.repository.Update(ctx, account); err != nil {
+	wallet.UpdatedAt = time.Now()
+	if err := s.repository.Update(ctx, wallet); err != nil {
 		return nil, err
 	}
-	return account, nil
+	return wallet, nil
 }
 
 func (s *Service) Delete(ctx context.Context, id, userID string) error {
@@ -114,7 +114,7 @@ func (s *Service) Delete(ctx context.Context, id, userID string) error {
 		return err
 	}
 	if count > 0 {
-		return apperror.New(apperror.ErrConflict, "Akun masih memiliki transaksi, tidak dapat dihapus")
+		return apperror.New(apperror.ErrConflict, "Wallet masih memiliki transaksi, tidak dapat dihapus")
 	}
 	return s.repository.Delete(ctx, id, userID)
 }

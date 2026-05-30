@@ -1,4 +1,4 @@
-package accounts
+package wallets
 
 import (
 	"github.com/jmoiron/sqlx"

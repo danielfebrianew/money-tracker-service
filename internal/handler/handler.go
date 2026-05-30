@@ -1,7 +1,7 @@
 package handler
 
 import (
-	accountsmodule "money-tracker-service/internal/modules/accounts"
+	walletsmodule "money-tracker-service/internal/modules/wallets"
 	adminmodule "money-tracker-service/internal/modules/admin"
 	authmodule "money-tracker-service/internal/modules/auth"
 	balancemodule "money-tracker-service/internal/modules/balance"
@@ -25,7 +25,7 @@ type Handler struct {
 	Tokens       *tokensmodule.Module
 	Payments     *paymentsmodule.Module
 	Transactions *transactions.Module
-	Accounts     *accountsmodule.Module
+	Wallets      *walletsmodule.Module
 	Dashboard    *dashboardmodule.Module
 	Groups       *groupsmodule.Module
 	Referral     *referralmodule.Module
@@ -42,7 +42,7 @@ type Dependencies struct {
 	Tokens       *tokensmodule.Module
 	Payments     *paymentsmodule.Module
 	Transactions *transactions.Module
-	Accounts     *accountsmodule.Module
+	Wallets      *walletsmodule.Module
 	Dashboard    *dashboardmodule.Module
 	Groups       *groupsmodule.Module
 	Referral     *referralmodule.Module
@@ -61,7 +61,7 @@ func New(deps Dependencies) *Handler {
 		Tokens:       deps.Tokens,
 		Payments:     deps.Payments,
 		Transactions: deps.Transactions,
-		Accounts:     deps.Accounts,
+		Wallets:      deps.Wallets,
 		Dashboard:    deps.Dashboard,
 		Groups:       deps.Groups,
 		Referral:     deps.Referral,

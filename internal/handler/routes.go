@@ -31,7 +31,7 @@ func registerUserRoutes(api *echo.Group, h *Handler, cache *cache.Cache) {
 	h.User.RegisterUserRoutes(userAPI)
 
 	h.Transactions.RegisterUserRoutes(userAPI)
-	h.Accounts.RegisterUserRoutes(userAPI)
+	h.Wallets.RegisterUserRoutes(userAPI)
 	h.Budget.RegisterUserRoutes(userAPI)
 	h.Categories.RegisterUserRoutes(userAPI)
 

@@ -1,4 +1,4 @@
-package accounts
+package wallets
 
 import (
 	"context"
@@ -23,11 +23,11 @@ func (r *Repository) BeginTx(ctx context.Context) (*sqlx.Tx, error) {
 	return r.db.BeginTxx(ctx, nil)
 }
 
-func (r *Repository) List(ctx context.Context, userID string) ([]model.Account, error) {
-	var items []model.Account
+func (r *Repository) List(ctx context.Context, userID string) ([]model.Wallet, error) {
+	var items []model.Wallet
 	err := r.db.SelectContext(ctx, &items, `
 		SELECT id, user_id, name, type, balance, icon, color, created_at, updated_at
-		FROM accounts
+		FROM wallets
 		WHERE user_id = $1
 		ORDER BY created_at DESC
 	`, userID)
@@ -37,11 +37,11 @@ func (r *Repository) List(ctx context.Context, userID string) ([]model.Account, 
 	return items, nil
 }
 
-func (r *Repository) Get(ctx context.Context, id, userID string) (*model.Account, error) {
-	var account model.Account
+func (r *Repository) Get(ctx context.Context, id, userID string) (*model.Wallet, error) {
+	var account model.Wallet
 	err := r.db.GetContext(ctx, &account, `
 		SELECT id, user_id, name, type, balance, icon, color, created_at, updated_at
-		FROM accounts
+		FROM wallets
 		WHERE id = $1 AND user_id = $2
 	`, id, userID)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -50,29 +50,29 @@ func (r *Repository) Get(ctx context.Context, id, userID string) (*model.Account
 	return &account, err
 }
 
-func (r *Repository) Create(ctx context.Context, account *model.Account) error {
+func (r *Repository) Create(ctx context.Context, account *model.Wallet) error {
 	_, err := r.db.NamedExecContext(ctx, `
-		INSERT INTO accounts (id, user_id, name, type, balance, icon, color, created_at, updated_at)
+		INSERT INTO wallets (id, user_id, name, type, balance, icon, color, created_at, updated_at)
 		VALUES (:id, :user_id, :name, :type, :balance, :icon, :color, :created_at, :updated_at)
 	`, account)
 	return err
 }
 
-func (r *Repository) Update(ctx context.Context, account *model.Account) error {
+func (r *Repository) Update(ctx context.Context, account *model.Wallet) error {
 	_, err := r.db.ExecContext(ctx, `
-		UPDATE accounts SET name = $1, icon = $2, color = $3, updated_at = $4 WHERE id = $5 AND user_id = $6
+		UPDATE wallets SET name = $1, icon = $2, color = $3, updated_at = $4 WHERE id = $5 AND user_id = $6
 	`, account.Name, account.Icon, account.Color, account.UpdatedAt, account.ID, account.UserID)
 	return err
 }
 
-func (r *Repository) CountTransactions(ctx context.Context, accountID string) (int, error) {
+func (r *Repository) CountTransactions(ctx context.Context, walletID string) (int, error) {
 	var count int
-	err := r.db.GetContext(ctx, &count, `SELECT COUNT(*) FROM transactions WHERE account_id = $1`, accountID)
+	err := r.db.GetContext(ctx, &count, `SELECT COUNT(*) FROM transactions WHERE wallet_id = $1`, walletID)
 	return count, err
 }
 
 func (r *Repository) Delete(ctx context.Context, id, userID string) error {
-	res, err := r.db.ExecContext(ctx, `DELETE FROM accounts WHERE id = $1 AND user_id = $2`, id, userID)
+	res, err := r.db.ExecContext(ctx, `DELETE FROM wallets WHERE id = $1 AND user_id = $2`, id, userID)
 	if err != nil {
 		return err
 	}
@@ -86,9 +86,9 @@ func (r *Repository) Delete(ctx context.Context, id, userID string) error {
 	return nil
 }
 
-func (r *Repository) UpdateBalance(ctx context.Context, tx *sqlx.Tx, accountID string, delta int) error {
+func (r *Repository) UpdateBalance(ctx context.Context, tx *sqlx.Tx, walletID string, delta int) error {
 	_, err := tx.ExecContext(ctx, `
-		UPDATE accounts SET balance = balance + $1 WHERE id = $2
-	`, delta, accountID)
+		UPDATE wallets SET balance = balance + $1 WHERE id = $2
+	`, delta, walletID)
 	return err
 }

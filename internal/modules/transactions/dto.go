@@ -7,7 +7,7 @@ type CreateRequest struct {
 	Jumlah    int     `json:"jumlah"`
 	Kategori  string  `json:"kategori"`
 	Tipe      string  `json:"tipe"`
-	AccountID *string `json:"account_id"`
+	WalletID *string `json:"wallet_id"`
 }
 
 type CreateInput = model.CreateTransactionInput
