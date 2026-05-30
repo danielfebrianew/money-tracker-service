@@ -24,7 +24,7 @@ func NewRepository(db *sqlx.DB) *Repository {
 func (r *Repository) List(ctx context.Context, userID string) ([]model.Category, error) {
 	var items []model.Category
 	err := r.db.SelectContext(ctx, &items, `
-		SELECT id, user_id, name, label, icon, color, is_default, created_at
+		SELECT id, user_id, name, description, icon, color, is_default, created_at
 		FROM categories
 		WHERE user_id = $1
 		ORDER BY is_default DESC, created_at ASC
@@ -35,7 +35,7 @@ func (r *Repository) List(ctx context.Context, userID string) ([]model.Category,
 func (r *Repository) Get(ctx context.Context, id, userID string) (*model.Category, error) {
 	var item model.Category
 	err := r.db.GetContext(ctx, &item, `
-		SELECT id, user_id, name, label, icon, color, is_default, created_at
+		SELECT id, user_id, name, description, icon, color, is_default, created_at
 		FROM categories
 		WHERE id = $1 AND user_id = $2
 	`, id, userID)
@@ -48,7 +48,7 @@ func (r *Repository) Get(ctx context.Context, id, userID string) (*model.Categor
 func (r *Repository) GetByName(ctx context.Context, userID, name string) (*model.Category, error) {
 	var item model.Category
 	err := r.db.GetContext(ctx, &item, `
-		SELECT id, user_id, name, label, icon, color, is_default, created_at
+		SELECT id, user_id, name, description, icon, color, is_default, created_at
 		FROM categories
 		WHERE user_id = $1 AND name = $2
 	`, userID, name)
@@ -60,9 +60,9 @@ func (r *Repository) GetByName(ctx context.Context, userID, name string) (*model
 
 func (r *Repository) Create(ctx context.Context, cat *model.Category) error {
 	_, err := r.db.ExecContext(ctx, `
-		INSERT INTO categories (id, user_id, name, label, icon, color, is_default, created_at)
+		INSERT INTO categories (id, user_id, name, description, icon, color, is_default, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`, cat.ID, cat.UserID, cat.Name, cat.Label, cat.Icon, cat.Color, cat.IsDefault, cat.CreatedAt)
+	`, cat.ID, cat.UserID, cat.Name, cat.Description, cat.Icon, cat.Color, cat.IsDefault, cat.CreatedAt)
 	return err
 }
 
@@ -78,9 +78,9 @@ func (r *Repository) BulkCreate(ctx context.Context, cats []model.Category) erro
 			"($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
 			base+1, base+2, base+3, base+4, base+5, base+6, base+7, base+8,
 		))
-		args = append(args, cat.ID, cat.UserID, cat.Name, cat.Label, cat.Icon, cat.Color, cat.IsDefault, cat.CreatedAt)
+		args = append(args, cat.ID, cat.UserID, cat.Name, cat.Description, cat.Icon, cat.Color, cat.IsDefault, cat.CreatedAt)
 	}
-	query := `INSERT INTO categories (id, user_id, name, label, icon, color, is_default, created_at)
+	query := `INSERT INTO categories (id, user_id, name, description, icon, color, is_default, created_at)
 		VALUES ` + strings.Join(placeholders, ",") + ` ON CONFLICT (user_id, name) DO NOTHING`
 	_, err := r.db.ExecContext(ctx, query, args...)
 	return err
@@ -88,8 +88,8 @@ func (r *Repository) BulkCreate(ctx context.Context, cats []model.Category) erro
 
 func (r *Repository) Update(ctx context.Context, cat *model.Category) error {
 	res, err := r.db.ExecContext(ctx, `
-		UPDATE categories SET label = $1, icon = $2, color = $3 WHERE id = $4 AND user_id = $5
-	`, cat.Label, cat.Icon, cat.Color, cat.ID, cat.UserID)
+		UPDATE categories SET description = $1, icon = $2, color = $3 WHERE id = $4 AND user_id = $5
+	`, cat.Description, cat.Icon, cat.Color, cat.ID, cat.UserID)
 	if err != nil {
 		return err
 	}

@@ -120,6 +120,7 @@ func main() {
 
 	e := echo.New()
 	e.HideBanner = true
+	e.HTTPErrorHandler = handler.ErrorHandler
 	e.Use(echoMiddleware.Logger())
 	e.Use(echoMiddleware.Recover())
 	e.Use(appmw.SecurityHeaders())

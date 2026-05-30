@@ -11,7 +11,7 @@ import (
 )
 
 var defaultCategories = []struct {
-	Name, Label, Icon, Color string
+	Name, Description, Icon, Color string
 }{
 	{"Makan", "Makanan & Minuman", "🍽️", "#FF5722"},
 	{"Transport", "Transportasi", "🚗", "#2196F3"},
@@ -38,20 +38,20 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 	if name == "" || len(name) > 50 {
 		return nil, apperror.New(apperror.ErrValidation, "Nama kategori wajib diisi dan maksimal 50 karakter")
 	}
-	label := strings.TrimSpace(input.Label)
-	if label == "" {
-		label = name
+	description := strings.TrimSpace(input.Description)
+	if description == "" {
+		description = name
 	}
 	existing, _ := s.repository.GetByName(ctx, userID, name)
 	if existing != nil {
 		return nil, apperror.New(apperror.ErrConflict, "Kategori dengan nama ini sudah ada")
 	}
 	cat := &model.Category{
-		ID:        ids.New("cat"),
-		UserID:    userID,
-		Name:      name,
-		Label:     label,
-		Icon:      strings.TrimSpace(input.Icon),
+		ID:          ids.New("cat"),
+		UserID:      userID,
+		Name:        name,
+		Description: description,
+		Icon:        strings.TrimSpace(input.Icon),
 		Color:     strings.TrimSpace(input.Color),
 		IsDefault: false,
 		CreatedAt: time.Now().UTC(),
@@ -67,10 +67,10 @@ func (s *Service) Update(ctx context.Context, id, userID string, input UpdateInp
 	if err != nil {
 		return nil, apperror.New(apperror.ErrNotFound, "Kategori tidak ditemukan")
 	}
-	if input.Label != nil {
-		label := strings.TrimSpace(*input.Label)
-		if label != "" {
-			cat.Label = label
+	if input.Description != nil {
+		description := strings.TrimSpace(*input.Description)
+		if description != "" {
+			cat.Description = description
 		}
 	}
 	if input.Icon != nil {
@@ -115,7 +115,7 @@ func (s *Service) SeedDefaults(ctx context.Context, userID string) error {
 			ID:        ids.New("cat"),
 			UserID:    userID,
 			Name:      d.Name,
-			Label:     d.Label,
+			Description: d.Description,
 			Icon:      d.Icon,
 			Color:     d.Color,
 			IsDefault: true,
