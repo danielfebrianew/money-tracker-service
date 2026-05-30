@@ -19,11 +19,11 @@ func NewHandler(service *Service) *Handler {
 
 // List godoc
 // @Summary      Daftar akun finansial
-// @Tags         Accounts
+// @Tags         Wallets
 // @Security     BearerAuth
 // @Produce      json
 // @Success      200 {object} response.Response
-// @Router       /accounts [get]
+// @Router       /wallets [get]
 func (h *Handler) List(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -38,13 +38,13 @@ func (h *Handler) List(c echo.Context) error {
 
 // Get godoc
 // @Summary      Detail akun finansial
-// @Tags         Accounts
+// @Tags         Wallets
 // @Security     BearerAuth
 // @Produce      json
-// @Param        id path string true "Account ID"
+// @Param        id path string true "Wallet ID"
 // @Success      200 {object} response.Response
 // @Failure      404 {object} response.Response
-// @Router       /accounts/{id} [get]
+// @Router       /wallets/{id} [get]
 func (h *Handler) Get(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -59,14 +59,14 @@ func (h *Handler) Get(c echo.Context) error {
 
 // Create godoc
 // @Summary      Buat akun finansial baru
-// @Tags         Accounts
+// @Tags         Wallets
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
 // @Param        body body CreateRequest true "Data akun"
 // @Success      201 {object} response.Response
 // @Failure      400 {object} response.Response
-// @Router       /accounts [post]
+// @Router       /wallets [post]
 func (h *Handler) Create(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -91,15 +91,15 @@ func (h *Handler) Create(c echo.Context) error {
 
 // Update godoc
 // @Summary      Update akun finansial
-// @Tags         Accounts
+// @Tags         Wallets
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        id   path string        true "Account ID"
+// @Param        id   path string        true "Wallet ID"
 // @Param        body body UpdateRequest true "Data yang diupdate"
 // @Success      200 {object} response.Response
 // @Failure      404 {object} response.Response
-// @Router       /accounts/{id} [patch]
+// @Router       /wallets/{id} [patch]
 func (h *Handler) Update(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -122,13 +122,13 @@ func (h *Handler) Update(c echo.Context) error {
 
 // Delete godoc
 // @Summary      Hapus akun finansial
-// @Tags         Accounts
+// @Tags         Wallets
 // @Security     BearerAuth
 // @Produce      json
-// @Param        id path string true "Account ID"
+// @Param        id path string true "Wallet ID"
 // @Success      200 {object} response.Response
 // @Failure      404 {object} response.Response
-// @Router       /accounts/{id} [delete]
+// @Router       /wallets/{id} [delete]
 func (h *Handler) Delete(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {

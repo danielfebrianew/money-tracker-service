@@ -30,12 +30,12 @@ type Service struct {
 	repository        *Repository
 	cache             *cache.Cache
 	parser            Parser
-	accountUpdater    WalletUpdater
+	walletUpdater    WalletUpdater
 	categoryValidator CategoryValidator
 }
 
-func NewService(repository *Repository, cache *cache.Cache, parser Parser, accountUpdater WalletUpdater) *Service {
-	return &Service{repository: repository, cache: cache, parser: parser, accountUpdater: accountUpdater}
+func NewService(repository *Repository, cache *cache.Cache, parser Parser, walletUpdater WalletUpdater) *Service {
+	return &Service{repository: repository, cache: cache, parser: parser, walletUpdater: walletUpdater}
 }
 
 func (s *Service) SetCategoryValidator(v CategoryValidator) {
@@ -54,8 +54,8 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 	if err != nil {
 		return nil, err
 	}
-	if input.WalletID != nil && s.accountUpdater != nil {
-		if _, err := s.accountUpdater.Get(ctx, *input.WalletID, userID); err != nil {
+	if input.WalletID != nil && s.walletUpdater != nil {
+		if _, err := s.walletUpdater.Get(ctx, *input.WalletID, userID); err != nil {
 			return nil, apperror.New(apperror.ErrNotFound, "Wallet tidak ditemukan")
 		}
 		dbTx, err := s.repository.BeginTx(ctx)
@@ -67,7 +67,7 @@ func (s *Service) Create(ctx context.Context, userID string, input CreateInput) 
 			return nil, err
 		}
 		delta := balanceDelta(tx.Tipe, tx.Jumlah)
-		if err := s.accountUpdater.UpdateBalance(ctx, dbTx, *input.WalletID, delta); err != nil {
+		if err := s.walletUpdater.UpdateBalance(ctx, dbTx, *input.WalletID, delta); err != nil {
 			return nil, err
 		}
 		if err := dbTx.Commit(); err != nil {
@@ -167,8 +167,8 @@ func (s *Service) Get(ctx context.Context, userID, txID string) (*model.Transact
 }
 
 func (s *Service) Delete(ctx context.Context, userID, txID string) error {
-	if s.accountUpdater != nil {
-		// Fetch first to check if there's an account to reverse balance for
+	if s.walletUpdater != nil {
+		// Fetch first to check if there's a wallet to reverse balance for
 		fetched, err := s.repository.Get(ctx, txID, userID)
 		if err != nil {
 			return err
@@ -183,7 +183,7 @@ func (s *Service) Delete(ctx context.Context, userID, txID string) error {
 				return err
 			}
 			delta := balanceDelta(fetched.Tipe, fetched.Jumlah) * -1
-			if err := s.accountUpdater.UpdateBalance(ctx, dbTx, *fetched.WalletID, delta); err != nil {
+			if err := s.walletUpdater.UpdateBalance(ctx, dbTx, *fetched.WalletID, delta); err != nil {
 				return err
 			}
 			if err := dbTx.Commit(); err != nil {

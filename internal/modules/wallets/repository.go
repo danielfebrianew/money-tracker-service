@@ -38,8 +38,8 @@ func (r *Repository) List(ctx context.Context, userID string) ([]model.Wallet, e
 }
 
 func (r *Repository) Get(ctx context.Context, id, userID string) (*model.Wallet, error) {
-	var account model.Wallet
-	err := r.db.GetContext(ctx, &account, `
+	var wallet model.Wallet
+	err := r.db.GetContext(ctx, &wallet, `
 		SELECT id, user_id, name, type, balance, icon, color, created_at, updated_at
 		FROM wallets
 		WHERE id = $1 AND user_id = $2
@@ -47,21 +47,21 @@ func (r *Repository) Get(ctx context.Context, id, userID string) (*model.Wallet,
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, apperror.ErrNotFound
 	}
-	return &account, err
+	return &wallet, err
 }
 
-func (r *Repository) Create(ctx context.Context, account *model.Wallet) error {
+func (r *Repository) Create(ctx context.Context, wallet *model.Wallet) error {
 	_, err := r.db.NamedExecContext(ctx, `
 		INSERT INTO wallets (id, user_id, name, type, balance, icon, color, created_at, updated_at)
 		VALUES (:id, :user_id, :name, :type, :balance, :icon, :color, :created_at, :updated_at)
-	`, account)
+	`, wallet)
 	return err
 }
 
-func (r *Repository) Update(ctx context.Context, account *model.Wallet) error {
+func (r *Repository) Update(ctx context.Context, wallet *model.Wallet) error {
 	_, err := r.db.ExecContext(ctx, `
 		UPDATE wallets SET name = $1, icon = $2, color = $3, updated_at = $4 WHERE id = $5 AND user_id = $6
-	`, account.Name, account.Icon, account.Color, account.UpdatedAt, account.ID, account.UserID)
+	`, wallet.Name, wallet.Icon, wallet.Color, wallet.UpdatedAt, wallet.ID, wallet.UserID)
 	return err
 }
 
