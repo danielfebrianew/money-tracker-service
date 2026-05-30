@@ -47,6 +47,7 @@ func registerUserRoutes(api *echo.Group, h *Handler, cache *cache.Cache) {
 	h.Groups.RegisterUserRoutes(userAPI, []echo.MiddlewareFunc{groupRate}, []echo.MiddlewareFunc{groupRate})
 
 	h.Referral.RegisterUserRoutes(userAPI, appmw.RateLimit(cache, "auth", 10, time.Minute))
+	h.Goals.RegisterUserRoutes(userAPI)
 }
 
 func registerExternalRoutes(api *echo.Group, h *Handler, cache *cache.Cache) {

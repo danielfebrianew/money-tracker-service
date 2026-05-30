@@ -1,27 +1,5 @@
 basePath: /api
 definitions:
-  accounts.CreateRequest:
-    properties:
-      balance:
-        type: integer
-      color:
-        type: string
-      icon:
-        type: string
-      name:
-        type: string
-      type:
-        type: string
-    type: object
-  accounts.UpdateRequest:
-    properties:
-      color:
-        type: string
-      icon:
-        type: string
-      name:
-        type: string
-    type: object
   auth.ChangePasswordRequest:
     properties:
       current_password:
@@ -73,9 +51,9 @@ definitions:
     properties:
       color:
         type: string
-      icon:
+      description:
         type: string
-      label:
+      icon:
         type: string
       name:
         type: string
@@ -84,10 +62,41 @@ definitions:
     properties:
       color:
         type: string
+      description:
+        type: string
       icon:
         type: string
-      label:
+    type: object
+  goals.ContributeInput:
+    properties:
+      amount:
+        type: integer
+    type: object
+  goals.CreateInput:
+    properties:
+      color:
         type: string
+      deadline:
+        type: string
+      icon:
+        type: string
+      name:
+        type: string
+      target_amount:
+        type: integer
+    type: object
+  goals.UpdateInput:
+    properties:
+      color:
+        type: string
+      deadline:
+        type: string
+      icon:
+        type: string
+      name:
+        type: string
+      target_amount:
+        type: integer
     type: object
   groups.CreateRequest:
     properties:
@@ -120,8 +129,6 @@ definitions:
     type: object
   transactions.CreateRequest:
     properties:
-      account_id:
-        type: string
       deskripsi:
         type: string
       jumlah:
@@ -129,6 +136,30 @@ definitions:
       kategori:
         type: string
       tipe:
+        type: string
+      wallet_id:
+        type: string
+    type: object
+  wallets.CreateRequest:
+    properties:
+      balance:
+        type: integer
+      color:
+        type: string
+      icon:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  wallets.UpdateRequest:
+    properties:
+      color:
+        type: string
+      icon:
+        type: string
+      name:
         type: string
     type: object
 host: localhost:8080
@@ -138,124 +169,6 @@ info:
   title: Money Tracker API
   version: "1.0"
 paths:
-  /accounts:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Daftar akun finansial
-      tags:
-      - Accounts
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Data akun
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/accounts.CreateRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Buat akun finansial baru
-      tags:
-      - Accounts
-  /accounts/{id}:
-    delete:
-      parameters:
-      - description: Account ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Hapus akun finansial
-      tags:
-      - Accounts
-    get:
-      parameters:
-      - description: Account ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Detail akun finansial
-      tags:
-      - Accounts
-    patch:
-      consumes:
-      - application/json
-      parameters:
-      - description: Account ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Data yang diupdate
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/accounts.UpdateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Update akun finansial
-      tags:
-      - Accounts
   /auth/change-password:
     put:
       consumes:
@@ -462,6 +375,29 @@ paths:
       summary: Hapus budget
       tags:
       - Budget
+    get:
+      parameters:
+      - description: Budget ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Detail budget beserta rincian transaksi
+      tags:
+      - Budget
     put:
       consumes:
       - application/json
@@ -491,29 +427,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Update limit budget
-      tags:
-      - Budget
-  /budgets/history:
-    get:
-      parameters:
-      - description: Filter kategori
-        in: query
-        name: kategori
-        type: string
-      - description: Jumlah bulan ke belakang (default 3, max 12)
-        in: query
-        name: months
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Histori pengeluaran per kategori
       tags:
       - Budget
   /categories:
@@ -680,6 +593,164 @@ paths:
       summary: Ringkasan keuangan bulanan
       tags:
       - Dashboard
+  /goals:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftar target tabungan
+      tags:
+      - Goals
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Data target
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/goals.CreateInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Buat target tabungan baru
+      tags:
+      - Goals
+  /goals/{id}:
+    delete:
+      parameters:
+      - description: Goal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus target tabungan
+      tags:
+      - Goals
+    get:
+      parameters:
+      - description: Goal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Detail target tabungan
+      tags:
+      - Goals
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Goal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data yang diupdate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/goals.UpdateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update target tabungan
+      tags:
+      - Goals
+  /goals/{id}/contribute:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Goal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Jumlah kontribusi (negatif untuk pengurangan)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/goals.ContributeInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Tambah atau kurangi kontribusi dana ke target
+      tags:
+      - Goals
   /groups:
     get:
       produces:
@@ -861,20 +932,6 @@ paths:
       summary: Ajukan top-up token
       tags:
       - Payments
-  /referral/generate:
-    post:
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Generate kode referral baru
-      tags:
-      - Referral
   /referral/summary:
     get:
       produces:
@@ -908,9 +965,17 @@ paths:
         in: query
         name: kategori
         type: string
-      - description: Kata kunci
+      - description: Filter by akun
+        in: query
+        name: account_id
+        type: string
+      - description: Kata kunci deskripsi
         in: query
         name: search
+        type: string
+      - description: Bulan (YYYY-MM), shortcut from+to
+        in: query
+        name: month
         type: string
       - description: Dari tanggal (YYYY-MM-DD)
         in: query
@@ -1005,6 +1070,124 @@ paths:
       summary: Detail transaksi
       tags:
       - Transactions
+  /wallets:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Daftar wallet
+      tags:
+      - Wallets
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Data wallet
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/wallets.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Buat wallet baru
+      tags:
+      - Wallets
+  /wallets/{id}:
+    delete:
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Hapus wallet
+      tags:
+      - Wallets
+    get:
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Detail wallet
+      tags:
+      - Wallets
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data yang diupdate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/wallets.UpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update wallet
+      tags:
+      - Wallets
 securityDefinitions:
   BearerAuth:
     description: 'Masukkan token dengan format: Bearer {token}'

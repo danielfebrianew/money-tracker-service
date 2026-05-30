@@ -1,4 +1,4 @@
-package wallets
+package goals
 
 import (
 	"net/http"
@@ -18,12 +18,12 @@ func NewHandler(service *Service) *Handler {
 }
 
 // List godoc
-// @Summary      Daftar wallet
-// @Tags         Wallets
+// @Summary      Daftar target tabungan
+// @Tags         Goals
 // @Security     BearerAuth
 // @Produce      json
 // @Success      200 {object} response.Response
-// @Router       /wallets [get]
+// @Router       /goals [get]
 func (h *Handler) List(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -37,98 +37,117 @@ func (h *Handler) List(c echo.Context) error {
 }
 
 // Get godoc
-// @Summary      Detail wallet
-// @Tags         Wallets
+// @Summary      Detail target tabungan
+// @Tags         Goals
 // @Security     BearerAuth
 // @Produce      json
-// @Param        id path string true "Wallet ID"
+// @Param        id path string true "Goal ID"
 // @Success      200 {object} response.Response
 // @Failure      404 {object} response.Response
-// @Router       /wallets/{id} [get]
+// @Router       /goals/{id} [get]
 func (h *Handler) Get(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	wallet, err := h.service.Get(c.Request().Context(), c.Param("id"), userID)
+	goal, err := h.service.Get(c.Request().Context(), c.Param("id"), userID)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Success(c, wallet)
+	return response.Success(c, goal)
 }
 
 // Create godoc
-// @Summary      Buat wallet baru
-// @Tags         Wallets
+// @Summary      Buat target tabungan baru
+// @Tags         Goals
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        body body CreateRequest true "Data wallet"
+// @Param        body body CreateInput true "Data target"
 // @Success      201 {object} response.Response
 // @Failure      400 {object} response.Response
-// @Router       /wallets [post]
+// @Router       /goals [post]
 func (h *Handler) Create(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	var req CreateRequest
+	var req CreateInput
 	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
-	wallet, err := h.service.Create(c.Request().Context(), userID, CreateInput{
-		Name:    req.Name,
-		Type:    req.Type,
-		Balance: req.Balance,
-		Icon:    req.Icon,
-		Color:   req.Color,
-	})
+	goal, err := h.service.Create(c.Request().Context(), userID, req)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Created(c, wallet)
+	return response.Message(c, http.StatusCreated, "Target berhasil dibuat.", goal)
 }
 
 // Update godoc
-// @Summary      Update wallet
-// @Tags         Wallets
+// @Summary      Update target tabungan
+// @Tags         Goals
 // @Security     BearerAuth
 // @Accept       json
 // @Produce      json
-// @Param        id   path string        true "Wallet ID"
-// @Param        body body UpdateRequest true "Data yang diupdate"
+// @Param        id   path string      true "Goal ID"
+// @Param        body body UpdateInput true "Data yang diupdate"
 // @Success      200 {object} response.Response
+// @Failure      400 {object} response.Response
 // @Failure      404 {object} response.Response
-// @Router       /wallets/{id} [patch]
+// @Router       /goals/{id} [put]
 func (h *Handler) Update(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	var req UpdateRequest
+	var req UpdateInput
 	if err := httphelper.Bind(c, &req); err != nil {
 		return err
 	}
-	wallet, err := h.service.Update(c.Request().Context(), c.Param("id"), userID, UpdateInput{
-		Name:  req.Name,
-		Icon:  req.Icon,
-		Color: req.Color,
-	})
+	goal, err := h.service.Update(c.Request().Context(), c.Param("id"), userID, req)
 	if err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Success(c, wallet)
+	return response.Message(c, http.StatusOK, "Target berhasil diperbarui.", goal)
+}
+
+// Contribute godoc
+// @Summary      Tambah atau kurangi kontribusi dana ke target
+// @Tags         Goals
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        id   path string          true "Goal ID"
+// @Param        body body ContributeInput true "Jumlah kontribusi (negatif untuk pengurangan)"
+// @Success      200 {object} response.Response
+// @Failure      400 {object} response.Response
+// @Failure      404 {object} response.Response
+// @Router       /goals/{id}/contribute [post]
+func (h *Handler) Contribute(c echo.Context) error {
+	userID, err := httphelper.RequireUserID(c)
+	if err != nil {
+		return httphelper.RespondError(c, err)
+	}
+	var req ContributeInput
+	if err := httphelper.Bind(c, &req); err != nil {
+		return err
+	}
+	goal, err := h.service.Contribute(c.Request().Context(), c.Param("id"), userID, req)
+	if err != nil {
+		return httphelper.RespondError(c, err)
+	}
+	return response.Message(c, http.StatusOK, "Kontribusi berhasil ditambahkan.", goal)
 }
 
 // Delete godoc
-// @Summary      Hapus wallet
-// @Tags         Wallets
+// @Summary      Hapus target tabungan
+// @Tags         Goals
 // @Security     BearerAuth
 // @Produce      json
-// @Param        id path string true "Wallet ID"
+// @Param        id path string true "Goal ID"
 // @Success      200 {object} response.Response
 // @Failure      404 {object} response.Response
-// @Router       /wallets/{id} [delete]
+// @Router       /goals/{id} [delete]
 func (h *Handler) Delete(c echo.Context) error {
 	userID, err := httphelper.RequireUserID(c)
 	if err != nil {
@@ -137,5 +156,5 @@ func (h *Handler) Delete(c echo.Context) error {
 	if err := h.service.Delete(c.Request().Context(), c.Param("id"), userID); err != nil {
 		return httphelper.RespondError(c, err)
 	}
-	return response.Message(c, http.StatusOK, "Wallet berhasil dihapus", nil)
+	return response.Message(c, http.StatusOK, "Target berhasil dihapus.", nil)
 }

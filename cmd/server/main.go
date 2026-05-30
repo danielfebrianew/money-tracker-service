@@ -33,6 +33,7 @@ import (
 	appmw "money-tracker-service/internal/middleware"
 	walletsmodule "money-tracker-service/internal/modules/wallets"
 	adminmodule "money-tracker-service/internal/modules/admin"
+	goalsmodule "money-tracker-service/internal/modules/goals"
 	authmodule "money-tracker-service/internal/modules/auth"
 	balancemodule "money-tracker-service/internal/modules/balance"
 	budgetmodule "money-tracker-service/internal/modules/budget"
@@ -92,6 +93,7 @@ func main() {
 	webhookModule := webhookmodule.NewModule(cfg, db, appCache, parser, fonnte, transactionService)
 	budgetModule := budgetmodule.NewModule(db)
 	categoryModule := categoriesmodule.NewModule(db)
+	goalModule := goalsmodule.NewModule(db)
 
 	authModule.Service.SetCategorySeeder(categoryModule.Service)
 	authModule.Service.SetReferralCreator(referralModule.Service)
@@ -116,6 +118,7 @@ func main() {
 		Webhook:      webhookModule,
 		Budget:       budgetModule,
 		Categories:   categoryModule,
+		Goals:        goalModule,
 	})
 
 	e := echo.New()
